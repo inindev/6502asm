@@ -96,9 +96,8 @@ Array("---", 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 )
 
 document.getElementById( "compileButton" ).disabled = false;
 document.getElementById( "runButton" ).disabled = true;
-//document.getElementById( "hexdumpButton" ).disabled = true;
+document.getElementById( "hexdumpButton" ).disabled = true;
 document.getElementById( "fileSelect" ).disabled = false;
-//document.getElementById( "submitCode" ).disabled = true;
 
 document.addEventListener( "keypress", keyPress, true );
 
@@ -142,11 +141,10 @@ function keyPress( e ) {
 
 function disableButtons() {
   document.getElementById( "runButton" ).disabled = true;
-//  document.getElementById( "hexdumpButton" ).disabled = true;
+  document.getElementById( "hexdumpButton" ).disabled = true;
   document.getElementById( "fileSelect" ).disabled = false;
   document.getElementById( "compileButton" ).disabled = false;
   document.getElementById( "runButton" ).value = "Run";
-//  document.getElementById( "submitCode" ).disabled = true;
   codeCompiledOK = false;
   codeRunning = false;
   document.getElementById( "code" ).focus();
@@ -258,10 +256,9 @@ function compileCode() {
 
   if( codeCompiledOK ) {
     document.getElementById( "runButton" ).disabled = false;
-//    document.getElementById( "hexdumpButton" ).disabled = false;
+    document.getElementById( "hexdumpButton" ).disabled = false;
     document.getElementById( "compileButton" ).disabled = true;
     document.getElementById( "fileSelect" ).disabled = false;
-//    document.getElementById( "submitCode" ).disabled = false;
     memory[defaultCodePC] = 0x00;
   } else {
     str = lines[x].replace( "<", "&lt;" ).replace( ">", "&gt;" );
@@ -916,7 +913,6 @@ function num2hex( nr ) {
   return str.substring( hi, hi+1  ) + str.substring( lo, lo+1 );
 }
 
-/*
 function hexDump() {
   w = window.open('', 'hexdump', 'width=500,height=300,resizable=yes,scrollbars=yes,toolbar=no,location=no,menubar=no,status=no' );
 
@@ -940,7 +936,6 @@ function hexDump() {
   w.document.write( html );
   w.document.close();
 }
-*/
 
 /*
  *  runBinary() - Executes the compiled code
@@ -951,16 +946,14 @@ function runBinary() {
   if( codeRunning ) {
     codeRunning = false;
     document.getElementById( "runButton" ).value = "Run";
-//    document.getElementById( "hexdumpButton" ).disabled = false;
+    document.getElementById( "hexdumpButton" ).disabled = false;
     document.getElementById( "fileSelect" ).disabled = false;
-//    document.getElementById( "submitCode" ).disabled = false;
     clearInterval( myInterval );
   } else {
     //reset();
     document.getElementById( "runButton" ).value = "Stop";
     document.getElementById( "fileSelect" ).disabled = true;
-//    document.getElementById( "hexdumpButton" ).disabled = true;
-//    document.getElementById( "submitCode" ).disabled = true;
+    document.getElementById( "hexdumpButton" ).disabled = true;
     codeRunning = true;
     myInterval = setInterval( "multiexecute()", 1 );
     //execute();
@@ -1942,8 +1935,7 @@ function execute() {
     codeRunning = false;
     document.getElementById( "runButton" ).value = "Run";
     document.getElementById( "fileSelect" ).disabled = false;
-//    document.getElementById( "hexdumpButton" ).disabled = false;
-//    document.getElementById( "submitCode" ).disabled = false;
+    document.getElementById( "hexdumpButton" ).disabled = false;
 //    updateDisplayFull();
   }
 }
