@@ -1,12 +1,22 @@
+//
+//  6502 assembler and emulator in Javascript - RAM Emulation
+//  John Clark - https://github.com/inindev/6502asm
+//
+//  Released under the GNU General Public License
+//  see http://gnu.org/licenses/gpl.html
+//
+//
 
 //
 // read and write bytes to random access memory
 // all operations and units in bytes except for read_word
 //
 
-function Ram(bytes)
+function RAM(bytes)
 {
-    var byteArray = new Array(bytes);
+    'use strict';
+
+    var u8Array = new Uint8Array(bytes);
 
     var read_hook_addr_begin = 0;
     var read_hook_addr_end = 0;
@@ -21,9 +31,10 @@ function Ram(bytes)
         if((addr >= read_hook_addr_begin) && (addr <= read_hook_addr_end) && (typeof read_hook_callback === "function")) {
             return (read_hook_callback(addr) & 0xff);
         }
-        return (byteArray[addr] & 0xff);
+        return u8Array[addr];
     }
 
+    // little endian read
     function read_word(addr) {
         var bl = read(addr);
         var bh = read(addr + 1) << 8;
@@ -31,21 +42,20 @@ function Ram(bytes)
     }
 
     function write(addr, val) {
-        var bv = (val & 0xff);
-        byteArray[addr] = bv;
+        u8Array[addr] = val;
         if((addr >= write_hook_addr_begin) && (addr <= write_hook_addr_end) && (typeof write_hook_callback === "function")) {
-            write_hook_callback(addr, bv);
+            write_hook_callback(addr, (val & 0xff));
         }
     }
 
     // memory read callback hook
-    // read_hook(0xfe, 0xfe, function(addr))
-    // set callback to null to clear
+    //   read_hook(0xfe, 0xfe, function(addr))
+    //   set callback to null to clear
     function read_hook(addr_begin, addr_end, callback) {
         if( (typeof callback !== "function") ||
             (addr_begin < 0) ||
             (addr_begin > addr_end) ||
-            (addr_end >= byteArray.length) )
+            (addr_end >= u8Array.length) )
         {
             read_hook_addr_begin = 0;
             read_hook_addr_end = 0;
@@ -59,13 +69,13 @@ function Ram(bytes)
     }
 
     // memory write callback hook
-    // write_hook(0x0200, 0x5ff, function(addr, val))
-    // set callback to null to clear
+    //   write_hook(0x0200, 0x5ff, function(addr, val))
+    //   set callback to null to clear
     function write_hook(addr_begin, addr_end, callback) {
         if( (typeof callback !== "function") ||
             (addr_begin < 0) ||
             (addr_begin > addr_end) ||
-            (addr_end > byteArray.length) )
+            (addr_end > u8Array.length) )
         {
             write_hook_addr_begin = 0;
             write_hook_addr_end = 0;
@@ -78,11 +88,9 @@ function Ram(bytes)
         write_hook_callback = callback;
     }
 
-    // clear ZP, stack and screen
+    // reset all RAM to zero
     function reset() {
-        for(var i=0; i<byteArray.length; i++) {
-            byteArray[i] = 0x00;
-        }
+        u8Array.fill(0);
     }
 
     return {
