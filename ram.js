@@ -74,7 +74,7 @@ function RAM(bytes)
         if( (typeof callback !== "function") ||
             (addr_begin < 0) ||
             (addr_begin > addr_end) ||
-            (addr_end > u8Array.length) )
+            (addr_end >= u8Array.length) )
         {
             write_hook_addr_begin = 0;
             write_hook_addr_end = 0;
@@ -92,12 +92,45 @@ function RAM(bytes)
         u8Array.fill(0);
     }
 
+    // export data range in hexdump format
+    function hexdump(addr_begin, addr_end, ascii) {
+        addr_begin = addr_begin || 0;
+        addr_end = addr_end || u8Array.length-1;
+
+        var out = "";
+        for(var i=addr_begin; i<=addr_end; i+=16) {
+            var row = i.toString(16).padStart(4, '0') + "  ";
+            var asc = "";
+            for(var j=i; j<i+16; j++) {
+                if(j <= addr_end) {
+                    var val = read(j);
+                    row += val.toString(16).padStart(2, '0') + " ";
+                    asc += val<0x20 || val>0x7e && val<0xc0 || val==0xf7 ? "." : String.fromCharCode(val);
+                }
+                else {
+                    row += "   ";
+                    asc += " ";
+                }
+                if(j == i+7) row += " ";
+            }
+            if(ascii) {
+                out += " " + row + " |" + asc + "|\n";
+            }
+            else {
+                out += " " + row + "\n";
+            }
+        }
+        return out;
+    }
+
+
     return {
         read: read,
         read_word: read_word,
         write: write,
         read_hook: read_hook,
         write_hook: write_hook,
-        reset, reset
+        reset: reset,
+        hexdump: hexdump
     };
 }
