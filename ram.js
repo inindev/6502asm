@@ -5,7 +5,6 @@
 //  Released under the GNU General Public License
 //  see http://gnu.org/licenses/gpl.html
 //
-//
 
 //
 // read and write bytes to random access memory

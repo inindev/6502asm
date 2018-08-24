@@ -16,7 +16,7 @@
     <br />
 
     <input type="button" value="Compile" id="compileButton" onClick="compileCode();" />
-    <input type="button" value="Run" id="runButton" onClick="runBinary();" />
+    <input type="button" value="Run" id="runButton" onClick="cpu.runBinary();" />
     <input type="button" value="Reset" id="resetButton" onClick="reset();" />
     <input type="button" value="Hexdump" id="hexdumpButton" onClick="hexDump();" />
 
@@ -73,6 +73,7 @@
   <br />
 
   <script type="text/javascript" src="ram.js"></script>
+  <script type="text/javascript" src="cpu6502.js"></script>
   <script type="text/javascript" src="assembler.js"></script>
 
 </body>
