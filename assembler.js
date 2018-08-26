@@ -16,18 +16,16 @@
 const CODE_START = 0x600;
 var pc = 0x00;
 
-var codeCompiledOK = false;
 var ram = new RAM(0x10000); // 64k
 var cpu = new CPU6502(ram);
+var display = new Display(ram);
+
 var labelIndex = new Array();
 var labelPtr = 0;
-var codeLen = 0;
-var display = new Array(0x400);
 
-var palette = [ "#000000", "#ffffff", "#880000", "#aaffee",
-                "#cc44cc", "#00cc55", "#0000aa", "#eeee77",
-                "#dd8855", "#664400", "#ff7777", "#333333",
-                "#777777", "#aaff66", "#0088ff", "#bbbbbb" ];
+var codeLen = 0;
+var codeCompiledOK = false;
+
 
                // Name,  Imm,  ZP,   ZPX,  ZPY,  ABS, ABSX, ABSY, INDX, INDY, SNGL, BRA
 var opcodes = [ ["ADC", 0x69, 0x65, 0x75, 0x00, 0x6d, 0x7d, 0x79, 0x61, 0x71, 0x00, 0x00],
@@ -94,33 +92,15 @@ document.getElementById("hexdumpButton").disabled = true;
 document.getElementById("fileSelect").disabled = false;
 document.addEventListener("keypress", keyPress, true);
 
-ram.read_hook(0x00fe, 0x00fe, function(addr) {
-    return Math.floor(Math.random()*256);
-});
-
-ram.write_hook(0x0200, 0x05ff, function(addr, val) {
-    display[addr-0x200].background = palette[val & 0x0f];
-});
-
-// paint the virtual display
-var html = '<table class="screen">';
-for(var y=0; y<32; y++) {
-    html += "<tr>";
-    for(var x=0; x<32; x++) {
-        html += '<td class="screen" id="x' + x + 'y' + y + '"></td>';
-    }
-    html += "</tr>";
-}
-html += "</table>";
-document.getElementById("screen").innerHTML = html;
-
 // reset everything
 reset();
 
+// random number generator at ZP $fe
+ram.read_hook(0x00fe, 0x00fe, function(addr) {
+    return Math.floor(Math.random() * 256);
+});
 
-//
-// keyPress() - store keycode in ZP $ff
-//
+// store keycode in ZP $ff
 function keyPress(e) {
     if(typeof window.event != "undefined") {
         e = window.event; // IE fix
@@ -131,9 +111,7 @@ function keyPress(e) {
     }
 }
 
-//
-// disableButtons() - disables the Run and Debug buttons when text is altered in the code editor
-//
+// disables the Run and Debug buttons when text is altered in the code editor
 function disableButtons() {
     document.getElementById("runButton").disabled = true;
     document.getElementById("hexdumpButton").disabled = true;
@@ -146,9 +124,7 @@ function disableButtons() {
     document.getElementById("code").focus();
 }
 
-//
-// load() - loads a file from server
-//
+// loads a file from server
 function load(file) {
     reset();
     disableButtons();
@@ -167,27 +143,14 @@ function load(file) {
     xhr.send(null);
 }
 
-//
-//  reset() - reset CPU and memory
-//
+// reset CPU and memory
 function reset() {
-    for(var y=0; y<32; y++) {
-        for(var x=0; x<32; x++) {
-            display[y*32+x] = document.getElementById("x"+x+"y"+y).style;
-            display[y*32+x].background = "#000000";
-        }
-    }
-
     ram.reset();
-
     pc = CODE_START;
-
     cpu.reset();
 }
 
-//
-// message() - prints text in the message window
-//
+// prints text in the message window
 function message(text) {
     var obj = document.getElementById("messages");
     obj.innerHTML += text + "<br />";
@@ -195,7 +158,7 @@ function message(text) {
 }
 
 //
-// compileCode() - compiles code into memory array
+// compiles code into memory array
 //
 function compileCode() {
     reset();
@@ -260,7 +223,7 @@ function compileCode() {
 }
 
 //
-// indexLabels() - pushes all labels to array
+// pushes all labels to array
 //
 function indexLabels(input) {
     // remove comments
@@ -286,7 +249,7 @@ function indexLabels(input) {
 }
 
 //
-// pushLabel() - push label to array
+// push label to array
 //   returns false if label already exists
 //
 function pushLabel(name) {
@@ -296,7 +259,7 @@ function pushLabel(name) {
 }
 
 //
-// findLabel() - returns true if label exists
+// returns true if label exists
 //
 function findLabel(name) {
     for(var i=0; i<labelIndex.length; i++) {
@@ -309,7 +272,7 @@ function findLabel(name) {
 }
 
 //
-// setLabelPC() - associates label with address
+// associates label with address
 //
 function setLabelPC(name, addr) {
     for(var i=0; i<labelIndex.length; i++) {
@@ -323,7 +286,7 @@ function setLabelPC(name, addr) {
 }
 
 //
-// getLabelPC() - get address associated with label
+// get address associated with label
 //
 function getLabelPC(name) {
     for(var i=0; i<labelIndex.length; i++) {
@@ -336,7 +299,7 @@ function getLabelPC(name) {
 }
 
 //
-// compileLine() - compiles one line of code
+// compiles one line of code
 //   returns true if it compiled successfully
 //
 function compileLine(input, lineno) { // TODO: lineno not used
@@ -447,7 +410,7 @@ function DCB(param) {
 }
 
 //
-// checkBranch() - commom branch function for all branches (BCC, BCS, BEQ, BNE..)
+// commom branch function for all branches (BCC, BCS, BEQ, BNE..)
 //
 function checkBranch(param, opcode) {
     if(opcode == 0x00) return false;
@@ -466,7 +429,7 @@ function checkBranch(param, opcode) {
 }
 
 //
-// checkImmediate() - check if param is immediate and push value
+// check if param is immediate and push value
 //
 function checkImmediate(param, opcode) {
     if(opcode == 0x00) return false;
@@ -737,42 +700,15 @@ function pushWord(value) {
 // hexDump() - dump binary as hex to new window
 //
 function hexDump() {
-    var w = window.open('', 'hexdump', 'width=500,height=300,resizable=yes,scrollbars=yes,toolbar=no,location=no,menubar=no,status=no');
+    var w = window.open('', 'hexdump', 'width=610,height='+(codeLen>450?800:400)+',resizable=yes,scrollbars=yes,toolbar=no,location=no,menubar=no,status=no');
 
     var html = "<html><head>";
     html += "<link href='style.css' rel='stylesheet' type='text/css' />";
-    html += "<title>hexdump</title></head><body>";
-    html += "<code>";
-    for(var x=0; x<codeLen; x++) {
-        if((x % 0x10) == 0) {
-            html += "<br/>";
-            html += (0x600 + x).toString(16).padStart(4, '0');
-            html += ":";
-        }
-        html += ((x % 8) == 0) ? "&nbsp;&nbsp;" : "&nbsp;";
-        html += ram.read(0x600 + x).toString(16).padStart(2, '0');
-    }
-    html += "</code></body></html>";
+    html += "<title>hexdump</title></head>";
+    html += "<body><pre>";
+    html += ram.hexdump(CODE_START, CODE_START+codeLen-1, true);
+    html += "</pre></body></html>";
+
     w.document.write(html);
     w.document.close();
 }
-
-//
-// updatePixelDisplay() - Updates the display at one pixel position
-//
-function updateDisplayPixel(addr) {
-    display[addr-0x200].background = palette[ram.read(addr) & 0x0f];
-}
-
-//
-// updateDisplayFull() - redraws the entire display according to memory
-//   (colors are supposed to be identical with the C64's palette)
-//
-function updateDisplayFull() {
-    for(var y=0; y<32; y++) {
-        for(var x=0; x<32; x++) {
-            updateDisplayPixel(((y << 5) + x) + 0x200);
-        }
-    }
-}
-

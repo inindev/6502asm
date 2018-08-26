@@ -90,6 +90,11 @@ function RAM(bytes)
     // reset all RAM to zero
     function reset() {
         u8Array.fill(0);
+        if(typeof write_hook_callback === "function") {
+            for(var i=write_hook_addr_begin; i<=write_hook_addr_end; i++) {
+                write_hook_callback(i, 0);
+            }
+        }
     }
 
     // export data range in hexdump format

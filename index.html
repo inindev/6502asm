@@ -1,24 +1,15 @@
 <html>
 <head>
-  <link href="style.css" rel="stylesheet" type="text/css" />
-  <title>6502asm.com - 6502 compatible assembler and emulator in javascript</title>
+  <link href="style.css" rel="stylesheet" type="text/css"/>
+  <title>6502 assembler and emulator</title>
   <meta charset="utf-8"/>
-  <meta name="keywords" content="6502, 6510, assembler, asm, compiler, assembly, emulator, simulator, virtual machine, vm">
-  <meta name="description" content="6502asm.com - Program and run 6502 assembly in your browser!">
 </head>
 <body>
-  <center>
-    <font class="title">6502asm.com</font> <font class="version">v1.2</font>
-    <font class="title">- World's first fantasy console!</font>
-    <br />
-    <font class="subtitle">6502 compatible assembler and emulator in javascript</font>
-    <br />
-    <br />
-
-    <input type="button" value="Compile" id="compileButton" onClick="compileCode();" />
-    <input type="button" value="Run" id="runButton" onClick="cpu.runBinary();" />
-    <input type="button" value="Reset" id="resetButton" onClick="reset();" />
-    <input type="button" value="Hexdump" id="hexdumpButton" onClick="hexDump();" />
+  <div class="btn-bar">
+    <input type="button" value="Compile" id="compileButton" onClick="compileCode()"/>
+    <input type="button" value="Run" id="runButton" onClick="cpu.runBinary()"/>
+    <input type="button" value="Reset" id="resetButton" onClick="reset()"/>
+    <input type="button" value="Hexdump" id="hexdumpButton" onClick="hexDump()"/>
 
     <select id="fileSelect" onChange="load(this.options[this.selectedIndex].value)">
       <option>Examples</option>
@@ -50,31 +41,141 @@
       <option value="triangles.asm"">triangles.asm</option>
       <option value="zookeeper.asm"">zookeeper.asm</option>
     </select>
+  </div>
 
-    <input type="button" value="Help" id="helpButton" onClick="window.open('help.html', 'helpwin', 'width=512,height=320,resizable=yes,scrollbars=yes,toolbar=no,location=no,menubar=no,status=no');" />
-  </center>
-
-  <table align="center">
+  <table>
     <tr>
       <td valign="top">
-        <div class="cursor" id="cursor">&nbsp;</div>
-        <textarea class="code" id="code" onKeyPress="disableButtons();"></textarea>
+        <div class="cursor">&nbsp;</div>
+        <textarea class="code" id="code" onKeyPress="disableButtons()"></textarea>
       </td>
+      <td>&nbsp;</td>
       <td valign="top">
-        <div class="cursor" id="cursor">&nbsp;</div>
-        <div class="screen" id="screen" />
+        <div class="cursor">&nbsp;</div>
+        <canvas class="screen" id="screen"></canvas>
+        <div class="registers" id="registers"></div>
+      </td>
+      <td>&nbsp;</td>
+      <td valign="top">
+        <div class="cursor">&nbsp;</div>
+        <div class="screen_setup">
+          <table>
+            <tr>
+              <td><input type="radio" id="32" name="res"/></td>
+              <td><label for="32">&nbsp;32x32&nbsp;&nbsp;&nbsp;<span>$0200-$05ff</span></label></td>
+            </tr>
+            <tr>
+              <td><input type="radio" id="48" name="res"/></td>
+              <td><label for="48">&nbsp;48x48&nbsp;&nbsp;&nbsp;<span>$2000-$28ff</span></label></td>
+            </tr>
+            <tr>
+              <td><input type="radio" id="64" name="res"/></td>
+              <td><label for="64">&nbsp;64x64&nbsp;&nbsp;&nbsp;<span>$2000-$2fff</span></label></td>
+            </tr>
+            <tr>
+              <td><input type="radio" id="80" name="res"/></td>
+              <td><label for="80">&nbsp;80x80&nbsp;&nbsp;&nbsp;<span>$2000-$38ff</span></label></td>
+            </tr>
+            <tr>
+              <td><input type="radio" id="96" name="res"/></td>
+              <td><label for="96">&nbsp;96x96&nbsp;&nbsp;&nbsp;<span>$2000-$43ff</span></label></td>
+            </tr>
+            <tr>
+              <td><input type="radio" id="128" name="res"/></td>
+              <td><label for="128">128x128&nbsp;&nbsp;<span>$2000-$5fff</span></label></td>
+            </tr>
+          </table>
+        </div>
       </td>
     </tr>
   </table>
 
-  <center>
-    <div class="messages" id="messages" />
-  </center>
-  <br />
+  <div>
+    <div class="messages" id="messages"/>
+  </div>
+
+  <br/>
 
   <script type="text/javascript" src="ram.js"></script>
   <script type="text/javascript" src="cpu6502.js"></script>
+  <script type="text/javascript" src="display.js"></script>
   <script type="text/javascript" src="assembler.js"></script>
+  <script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function() {
+      'use strict';
+
+      document.getElementsByClassName("screen_setup")[0].addEventListener("change", function(event) {
+        var screen = document.getElementById("screen");
+        var registers = document.getElementById("registers");
+        var res = parseInt(event.target.id, 10);
+        switch(res) {
+          case 32:
+            screen.width = 384;   // 12 * 32
+            screen.height = 288;  //  9 * 32
+            registers.setAttribute("style","height:92px; width:384px");
+            display.set_resolution(screen, 32, 32, 0x0200);
+            display.refresh();
+            break;
+          case 48:
+            screen.width = 384;   //  8 * 48
+            screen.height = 288;  //  6 * 48
+            registers.setAttribute("style","height:92px; width:384px");
+            display.set_resolution(screen, 48, 48, 0x2000);
+            display.refresh();
+            break;
+          case 64:
+            screen.width = 384;   //  6 * 64
+            screen.height = 256;  //  4 * 64
+            registers.setAttribute("style","height:124px; width:384px");
+            display.set_resolution(screen, 64, 64, 0x2000);
+            display.refresh();
+            break;
+          case 80: // leave this?
+            screen.width = 400;   //  5 * 80
+            screen.height = 240;  //  3 * 80
+            registers.setAttribute("style","height:140px; width:400px");
+            display.set_resolution(screen, 80, 80, 0x2000);
+            display.refresh();
+            break;
+          case 96:
+            screen.width = 384;   //  4 * 96
+            screen.height = 288;  //  3 * 96
+            registers.setAttribute("style","height:92px; width:384px");
+            display.set_resolution(screen, 96, 96, 0x2000);
+            display.refresh();
+            break;
+          case 128:
+            screen.width = 384;   //  3 * 128
+            screen.height = 256;  //  2 * 128
+            registers.setAttribute("style","height:124px; width:384px");
+            display.set_resolution(screen, 128, 128, 0x2000);
+            display.refresh();
+            break;
+        }
+
+//        context.fillStyle = "#000000";
+//        context.fillRect(0, 0, screen.width, screen.height);
+//
+//        var pixelWidth = Math.floor(screen.width / res);
+//        var pixelHeight = Math.floor(screen.height / res);
+//        context.fillStyle = "#ffff00";
+//        for(var x=0; x<res; x++) {
+//          context.fillRect(x*pixelWidth, x*pixelHeight, pixelWidth, pixelHeight);
+//          context.fillRect(screen.width-(x+1)*pixelWidth, x*pixelHeight, pixelWidth, pixelHeight);
+//        }
+      });
+
+      var rbtn = document.querySelector("input[name=res]:checked");
+      if(rbtn) {
+        rbtn.checked = false;
+      }
+      else {
+        rbtn = document.getElementById("64");
+      }
+      rbtn.click();
+
+    }, false);
+  </script>
 
 </body>
 </html>
