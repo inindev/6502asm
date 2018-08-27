@@ -13,33 +13,33 @@
 
     <select id="fileSelect" onChange="load(this.options[this.selectedIndex].value)">
       <option>Examples</option>
-      <option value="adventure.asm"">adventure.asm</option>
-      <option value="alive.asm"">alive.asm</option>
-      <option value="backandforth.asm"">backandforth.asm</option>
-      <option value="byterun.asm"">byterun.asm</option>
-      <option value="calculator.asm"">calculator.asm</option>
-      <option value="colors.asm"">colors.asm</option>
-      <option value="compo-May07-1st.asm"">compo-May07-1st.asm</option>
-      <option value="compo-May07-2nd.asm"">compo-May07-2nd.asm</option>
-      <option value="compo-May07-3rd.asm"">compo-May07-3rd.asm</option>
-      <option value="demoscene.asm"">demoscene.asm</option>
-      <option value="disco.asm"">disco.asm</option>
-      <option value="fullscreenlogo.asm"">fullscreenlogo.asm</option>
-      <option value="gameoflife.asm"">gameoflife.asm</option>
-      <option value="noise.asm"">noise.asm</option>
-      <option value="random.asm"">random.asm</option>
-      <option value="rle.asm"">rle.asm</option>
-      <option value="rorshach.asm"">rorshach.asm</option>
-      <option value="screenpatterns.asm"">screenpatterns.asm</option>
-      <option value="selfmodify.asm"">selfmodify.asm</option>
-      <option value="sierpinski.asm"">sierpinski.asm</option>
-      <option value="skier.asm"">skier.asm</option>
-      <option value="softsprites.asm"">softsprites.asm</option>
-      <option value="spacer.asm"">spacer.asm</option>
-      <option value="splashscreen.asm"">splashscreen.asm</option>
-      <option value="starfield2d.asm"">starfield2d.asm</option>
-      <option value="triangles.asm"">triangles.asm</option>
-      <option value="zookeeper.asm"">zookeeper.asm</option>
+      <option value="adventure.asm">adventure.asm</option>
+      <option value="alive.asm">alive.asm</option>
+      <option value="backandforth.asm">backandforth.asm</option>
+      <option value="byterun.asm">byterun.asm</option>
+      <option value="calculator.asm">calculator.asm</option>
+      <option value="colors.asm">colors.asm</option>
+      <option value="compo-May07-1st.asm">compo-May07-1st.asm</option>
+      <option value="compo-May07-2nd.asm">compo-May07-2nd.asm</option>
+      <option value="compo-May07-3rd.asm">compo-May07-3rd.asm</option>
+      <option value="demoscene.asm">demoscene.asm</option>
+      <option value="disco.asm">disco.asm</option>
+      <option value="fullscreenlogo.asm">fullscreenlogo.asm</option>
+      <option value="gameoflife.asm">gameoflife.asm</option>
+      <option value="noise.asm">noise.asm</option>
+      <option value="random.asm">random.asm</option>
+      <option value="rle.asm">rle.asm</option>
+      <option value="rorshach.asm">rorshach.asm</option>
+      <option value="screenpatterns.asm">screenpatterns.asm</option>
+      <option value="selfmodify.asm">selfmodify.asm</option>
+      <option value="sierpinski.asm">sierpinski.asm</option>
+      <option value="skier.asm">skier.asm</option>
+      <option value="softsprites.asm">softsprites.asm</option>
+      <option value="spacer.asm">spacer.asm</option>
+      <option value="splashscreen.asm">splashscreen.asm</option>
+      <option value="starfield2d.asm">starfield2d.asm</option>
+      <option value="triangles.asm">triangles.asm</option>
+      <option value="zookeeper.asm">zookeeper.asm</option>
     </select>
   </div>
 
@@ -85,6 +85,19 @@
               <td><label for="128">128x128&nbsp;&nbsp;<span>$2000-$5fff</span></label></td>
             </tr>
           </table>
+
+          <div class="palette">
+            <span>Palette</span>
+            <select onChange="change_palette(this.options[this.selectedIndex].value)">
+              <option value="pal_a2e">Apple II</option>
+              <option value="pal_cga">CGA</option>
+              <option value="pal_c64a">Commodore 64a</option>
+              <option value="pal_c64b">Commodore 64b</option>
+              <option value="pal_mono">Monochrome</option>
+              <option value="pal_win" selected>Windows</option>
+            </select>
+          </div>
+
         </div>
       </td>
     </tr>
@@ -101,6 +114,10 @@
   <script type="text/javascript" src="display.js"></script>
   <script type="text/javascript" src="assembler.js"></script>
   <script type="text/javascript">
+    function change_palette(pal) {
+        display.set_palette(pal);
+    }
+
     document.addEventListener("DOMContentLoaded", function() {
       'use strict';
 

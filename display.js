@@ -16,10 +16,46 @@ function Display(ram)
     var addr_begin = 0;
     var addr_end = 0;
 
-    var palette = [ "#000000", "#ffffff", "#880000", "#aaffee",
-                    "#cc44cc", "#00cc55", "#0000aa", "#eeee77",
-                    "#dd8855", "#664400", "#ff7777", "#333333",
-                    "#777777", "#aaff66", "#0088ff", "#bbbbbb" ];
+    var pal_a2e  = [ "#000", "#d03", "#009", "#d2d",
+                     "#072", "#555", "#22f", "#6af",
+                     "#850", "#f60", "#aaa", "#f98",
+                     "#1d0", "#ff0", "#4f9", "#fff" ];
+
+    var pal_c64a = [ "#000", "#fff", "#800", "#afe",
+                     "#c4c", "#0c5", "#00a", "#ee7",
+                     "#d85", "#640", "#f77", "#333",
+                     "#777", "#af6", "#08f", "#bbb" ];
+
+    var pal_c64b = [ "#000", "#fff", "#800", "#6bb",
+                     "#949", "#594", "#00a", "#dd6",
+                     "#d73", "#640", "#d55", "#333",
+                     "#777", "#5c5", "#47e", "#bbb" ];
+
+    var pal_cga  = [ "#000", "#00a", "#0a0", "#0aa",
+                     "#a00", "#a0a", "#a50", "#aaa",
+                     "#555", "#55f", "#5f5", "#5ff",
+                     "#f55", "#f5f", "#ff5", "#fff" ];
+
+    var pal_win  = [ "#000", "#800", "#080", "#880",
+                     "#008", "#808", "#088", "#ccc",
+                     "#888", "#f00", "#0f0", "#ff0",
+                     "#00f", "#f0f", "#0ff", "#fff" ];
+    var pal_mono = [ "#000", "#111", "#222", "#333",
+                     "#444", "#555", "#666", "#777",
+                     "#888", "#999", "#aaa", "#bbb",
+                     "#ccc", "#ddd", "#eee", "#fff" ];
+
+    var palettes = {
+        pal_a2e:  pal_a2e,
+        pal_c64a: pal_c64a,
+        pal_c64b: pal_c64b,
+        pal_cga:  pal_cga,
+        pal_win:  pal_win,
+        pal_mono: pal_mono
+    };
+
+    var palette = pal_win;
+
 
     function set_resolution(canvas, width, height, base_addr) {
         var context = canvas.getContext('2d');
@@ -40,6 +76,11 @@ function Display(ram)
         });
     }
 
+    function set_palette(pal) {
+        palette = palettes[pal];
+        refresh();
+    }
+
     function refresh() {
         for(var i=addr_begin; i<=addr_end; i++) {
             var val = ram.read(i);
@@ -55,6 +96,7 @@ function Display(ram)
 
     return {
         set_resolution: set_resolution,
+        set_palette: set_palette,
         refresh: refresh,
         reset: reset
     };
