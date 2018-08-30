@@ -45,8 +45,6 @@ textarea.code {
 canvas.screen {
   border: 1px solid black;
   background-color: #fff;
-/*  width: 360px; */
-/*  height: 288px; */
 }
 
 div.screen_setup {
@@ -102,5 +100,5 @@ div.cursor {
   margin-top: 5px;
   margin-bottom: 2px;
   font-size: 10px;
-  color: #444444;
+  color: #444;
 }

@@ -88,13 +88,12 @@
 
           <div class="palette">
             <span>Palette</span>
-            <select onChange="change_palette(this.options[this.selectedIndex].value)">
+            <select id="palette" onchange="change_palette(this.value)">
               <option value="pal_a2e">Apple II</option>
               <option value="pal_cga">CGA</option>
-              <option value="pal_c64a">Commodore 64a</option>
-              <option value="pal_c64b">Commodore 64b</option>
+              <option value="pal_c64">Commodore 64</option>
               <option value="pal_mono">Monochrome</option>
-              <option value="pal_win" selected>Windows</option>
+              <option value="pal_win">Windows</option>
             </select>
           </div>
 
@@ -118,10 +117,10 @@
         display.set_palette(pal);
     }
 
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", () => {
       'use strict';
 
-      document.getElementsByClassName("screen_setup")[0].addEventListener("change", function(event) {
+      document.getElementsByClassName("screen_setup")[0].addEventListener("change", (event) => {
         var screen = document.getElementById("screen");
         var registers = document.getElementById("registers");
         var res = parseInt(event.target.id, 10);
@@ -182,14 +181,19 @@
 //        }
       });
 
+      // 32x32 display
       var rbtn = document.querySelector("input[name=res]:checked");
       if(rbtn) {
         rbtn.checked = false;
       }
       else {
-        rbtn = document.getElementById("64");
+        rbtn = document.getElementById("32");
       }
       rbtn.click();
+
+      // c64 palette
+      document.getElementById("palette").value = "pal_c64";
+      display.set_palette("pal_c64");
 
     }, false);
   </script>

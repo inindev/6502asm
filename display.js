@@ -21,7 +21,7 @@ function Display(ram)
                      "#850", "#f60", "#aaa", "#f98",
                      "#1d0", "#ff0", "#4f9", "#fff" ];
 
-    var pal_c64a = [ "#000", "#fff", "#800", "#afe",
+    var pal_c64  = [ "#000", "#fff", "#800", "#afe",
                      "#c4c", "#0c5", "#00a", "#ee7",
                      "#d85", "#640", "#f77", "#333",
                      "#777", "#af6", "#08f", "#bbb" ];
@@ -47,7 +47,7 @@ function Display(ram)
 
     var palettes = {
         pal_a2e:  pal_a2e,
-        pal_c64a: pal_c64a,
+        pal_c64:  pal_c64,
         pal_c64b: pal_c64b,
         pal_cga:  pal_cga,
         pal_win:  pal_win,
