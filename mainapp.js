@@ -18,21 +18,26 @@ class MainApp
     }
 
     init() {
+        this.is_compiled = false;
+        this.is_running = false;
+
         this.toolbar = {
             compile: document.querySelector("div.toolbar>input[value=Compile]"),
             run: document.querySelector("div.toolbar>input[value=Run]"),
             reset: document.querySelector("div.toolbar>input[value=Reset]"),
-            hexdump: document.querySelector("div.toolbar>input[value=Hexdump]")
+            hexdump: document.querySelector("div.toolbar>input[value=Hexdump]"),
+            disassemble: { disabled: true }, // dummy stub-out
+            file_select: document.querySelector("div.toolbar>select")
         };
 
-        this.toolbar.compile.addEventListener("click", compileCode.bind(this));
-        this.toolbar.run.addEventListener("click", cpu.runBinary.bind(this));
+        this.toolbar.compile.addEventListener("click", this.on_compile_code.bind(this));
+        this.toolbar.run.addEventListener("click", this.on_toggle_run_code.bind(this));
         this.toolbar.reset.addEventListener("click", reset.bind(this));
         this.toolbar.hexdump.addEventListener("click", hexDump.bind(this));
 
         this.editor = document.querySelector("textarea.editor");
 
-        document.querySelector("div.toolbar>select").addEventListener("change", this.on_load_file.bind(this));
+        this.toolbar.file_select.addEventListener("change", this.on_load_file.bind(this));
         document.querySelector("div.screen_res").addEventListener("change", this.on_set_resolution.bind(this));
         document.querySelector("div.palette").addEventListener("change", this.on_set_palette.bind(this));
 
@@ -41,6 +46,9 @@ class MainApp
 
         // random number generator at ZP $fe
         ram.read_hook(0x00fe, 0x00fe, this.on_random_read.bind(this));
+
+        // initial toolbar button states
+        this.update_button_states(false, false);
 
         // 32x32 display
         var rbtn = document.querySelector("input[name=res]:checked");
@@ -55,6 +63,58 @@ class MainApp
         // commodore 64 palette
         document.querySelector("div.palette>select").value = "pal_c64";
         display.set_palette("pal_c64");
+    }
+
+
+    // TODO: disable Run and Debug buttons when text is altered in the code editor
+    update_button_states(is_compiled, is_running) {
+        this.is_compiled = is_compiled;
+        this.is_running = is_running;
+
+        if(!this.is_compiled) {
+            this.toolbar.compile.disabled = false;
+            this.toolbar.run.disabled = true;
+            this.toolbar.run.value = "Run";
+            this.toolbar.reset.disabled = true;
+            this.toolbar.hexdump.disabled = true;
+            this.toolbar.disassemble.disabled = true;
+            this.toolbar.file_select.disabled = false;
+            return;
+        }
+
+        // code is compiled, are we running?
+        this.toolbar.compile.disabled = true;
+        this.toolbar.run.disabled = false;
+        this.toolbar.reset.disabled = false;
+        this.toolbar.hexdump.disabled = false;
+        this.toolbar.disassemble.disabled = false;
+
+        if(this.is_running) {
+            this.toolbar.file_select.disabled = true;
+            this.toolbar.run.value = "Stop";
+        }
+        else {
+            this.toolbar.file_select.disabled = false;
+            this.toolbar.run.value = "Run";
+        }
+    }
+
+
+    //
+    // event handlers
+    //
+    on_compile_code(event) {
+        this.update_button_states(false, false);
+
+        let code = this.editor.value;
+        const is_compiled = compileCode(code);
+        this.update_button_states(is_compiled, false);
+    }
+
+    on_toggle_run_code(event) {
+        const new_state = !this.is_running;
+        cpu.set_running(new_state);
+        this.update_button_states(true, new_state);  // TODO: callback for code stop
     }
 
     on_set_resolution(event) {
@@ -123,7 +183,7 @@ class MainApp
 
     on_load_file(event) {
         reset();
-        disableButtons();
+        this.update_button_states(false, false);
 
         this.editor.value = "loading, please wait...";
         this.toolbar.compile.disabled = true;

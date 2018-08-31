@@ -15,8 +15,7 @@ function CPU6502(ram)
 
     var ram = ram;
 
-    var codeRunning = false;
-    var myInterval;
+    var interval = null;
 
     var regPC = 0x600; // program counter
     var regSP = 0x100; // stack pointer
@@ -75,7 +74,7 @@ function CPU6502(ram)
           ram.write((regSP & 0xff) + 0x100, value);
       } else {
           message("Stack full: " + regSP);
-          codeRunning = false;
+          set_running(false);
       }
   }
 
@@ -92,7 +91,7 @@ function CPU6502(ram)
           return value;
       } else {
           message("Stack empty");
-          codeRunning = false;
+          set_running(false);
           return 0;
       }
   }
@@ -132,24 +131,24 @@ function CPU6502(ram)
       return (addr & 0xffff).toString(16).padStart(4, '0');
   }
 
+  function is_running() {
+      return interval != null;
+  }
+
   //
-  // runBinary() - executes the compiled code
+  // executes the compiled code
   //
-  function runBinary() {
-      if(codeRunning) {
-          codeRunning = false;
-          document.getElementById("runButton").value = "Run";
-          document.getElementById("hexdumpButton").disabled = false;
-          document.getElementById("fileSelect").disabled = false;
-          clearInterval(myInterval);
-      } else {
-          //reset();
-          document.getElementById("runButton").value = "Stop";
-          document.getElementById("fileSelect").disabled = true;
-          document.getElementById("hexdumpButton").disabled = true;
-          codeRunning = true;
-          myInterval = setInterval(multiexecute, 1);
-          //execute();
+  function set_running(do_run) {
+      if(do_run == is_running()) {
+          return;  // nothing to do
+      }
+
+      if(do_run) {
+          interval = setInterval(multiexecute, 1);  // run every 1ms
+      }
+      else {
+          clearInterval(interval);
+          interval = null;
       }
   }
 
@@ -273,7 +272,7 @@ function CPU6502(ram)
   //             this is the main part of the CPU emulator
   //
   function execute() {
-      if(!codeRunning) return;
+//      if(!codeRunning) return;
 
       var addr, offset, value, sf, zp;
 
@@ -281,7 +280,7 @@ function CPU6502(ram)
   //    message("PC=" + addr2hex(regPC-1) + " opcode=" + opcode + " X="+regX + " Y=" + regY + " A=" + regA);
       switch(opcode) {
           case 0x00:                                                        // BRK implied
-              codeRunning = false;
+              set_running(false);
               break;
           case 0x01:                                                        // ORA INDX
               addr = popByte() + regX;
@@ -1133,23 +1132,22 @@ function CPU6502(ram)
               break;
           default:
               message("Address $" + addr2hex(regPC) + " - unknown opcode " + opcode);
-              codeRunning = false;
+              set_running(false);
               break;
       }
 
-      if((regPC == 0) || (!codeRunning)) {
-          clearInterval(myInterval);
+      if(regPC == 0) {
+          set_running(false);
+      }
+
+      if(!is_running()) {
           message("program end at PC=$" + addr2hex(regPC-1));
-          codeRunning = false;
-          document.getElementById("runButton").value = "Run";
-          document.getElementById("fileSelect").disabled = false;
-          document.getElementById("hexdumpButton").disabled = false;
-  //        updateDisplayFull();
       }
   }
 
    return {
-      runBinary: runBinary,
+      is_running: is_running,
+      set_running: set_running,
       reset: reset
    };
 }

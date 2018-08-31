@@ -24,7 +24,7 @@ var labelIndex = new Array();
 var labelPtr = 0;
 
 var codeLen = 0;
-var codeCompiledOK = false;
+//var codeCompiledOK = false;
 
 
                // Name,  Imm,  ZP,   ZPX,  ZPY,  ABS, ABSX, ABSY, INDX, INDY, SNGL, BRA
@@ -86,35 +86,32 @@ var opcodes = [ ["ADC", 0x69, 0x65, 0x75, 0x00, 0x6d, 0x7d, 0x79, 0x61, 0x71, 0x
                 ["---", 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00] ];
 
 // init
-document.getElementById("compileButton").disabled = false;
-document.getElementById("runButton").disabled = true;
-document.getElementById("hexdumpButton").disabled = true;
-document.getElementById("fileSelect").disabled = false;
+//document.getElementById("compileButton").disabled = false;
+//document.getElementById("runButton").disabled = true;
+//document.getElementById("hexdumpButton").disabled = true;
+//document.getElementById("fileSelect").disabled = false;
 
 // reset everything
 reset();
 
 
-
 // disables the Run and Debug buttons when text is altered in the code editor
-function disableButtons() {
-    document.getElementById("runButton").disabled = true;
-    document.getElementById("hexdumpButton").disabled = true;
-    document.getElementById("fileSelect").disabled = false;
-    document.getElementById("compileButton").disabled = false;
-    document.getElementById("runButton").value = "Run";
-    codeCompiledOK = false;
+//function disableButtons() {
+//    document.getElementById("runButton").disabled = true;
+//    document.getElementById("hexdumpButton").disabled = true;
+//    document.getElementById("fileSelect").disabled = false;
+//    document.getElementById("compileButton").disabled = false;
+//    document.getElementById("runButton").value = "Run";
+//    codeCompiledOK = false;
 // TODO
 //    codeRunning = false;
-    document.getElementById("code").focus();
-}
-
-// loads a file from server
+//    document.getElementById("code").focus();
+//}
 
 
 // reset CPU and memory
 function reset() {
-    ram.reset();
+//    ram.reset();
     pc = CODE_START;
     cpu.reset();
 }
@@ -122,21 +119,20 @@ function reset() {
 // prints text in the message window
 function message(text) {
     var obj = document.getElementById("messages");
-    obj.innerHTML += text + "<br />";
+    obj.innerHTML += text + "<br/>";
     obj.scrollTop = obj.scrollHeight;
 }
 
 //
 // compiles code into memory array
 //
-function compileCode() {
+function compileCode(code) {
     reset();
     document.getElementById("messages").innerHTML = "";
 
-    var code = document.getElementById("code").value;
     code += "\n\n";
     var lines = code.split("\n");
-    codeCompiledOK = true;
+//    codeCompiledOK = true;
     labelIndex = new Array();
     labelPtr = 0;
 
@@ -147,7 +143,7 @@ function compileCode() {
     for(var xc=0; xc<lines.length; xc++) {
         if(!indexLabels(lines[xc])) {
             message("<b>label already defined at line "+(xc+1)+":</b> "+lines[xc]);
-            return false;
+            return false; // error
         }
     }
 
@@ -159,36 +155,26 @@ function compileCode() {
 
     message("compiling code...");
 
-    var x;
-    for(x=0; x<lines.length; x++) {
-        if(!compileLine(lines[x], x)) {
-            codeCompiledOK = false;
-            break;
-        }
+    var x, res;
+    for(x=0, res=true; x<lines.length && res; x++) {
+        res = compileLine(lines[x], x);
+    }
+
+    if(!res) {
+        str = lines[x].replace("<", "&lt;").replace(">", "&gt;");
+        message("<b>syntax error - line " + (x+1) + ": " + str + "</b>");
+        return false;
     }
 
     if(codeLen == 0) {
-        codeCompiledOK = false;
         message("no code to run");
+        return false;
     }
 
-    if(codeCompiledOK) {
-        document.getElementById("runButton").disabled = false;
-        document.getElementById("hexdumpButton").disabled = false;
-        document.getElementById("compileButton").disabled = true;
-        document.getElementById("fileSelect").disabled = false;
-        ram.write(pc, 0x00);
-    } else {
-        str = lines[x].replace("<", "&lt;").replace(">", "&gt;");
-        message("<b>syntax error - line " + (x+1) + ": " + str + "</b>");
-        document.getElementById("runButton").disabled = true;
-        document.getElementById("compileButton").disabled = false;
-        document.getElementById("fileSelect").disabled = false;
-        return;
-    }
-
-//    updateDisplayFull();
+    ram.write(pc, 0x00);
     message("code compiled successfully: " + codeLen + " bytes");
+
+    return true;
 }
 
 //

@@ -6,12 +6,12 @@
 </head>
 <body>
   <div class="toolbar">
-    <input type="button" value="Compile" id="compileButton"/>
-    <input type="button" value="Run" id="runButton"/>
-    <input type="button" value="Reset" id="resetButton"/>
-    <input type="button" value="Hexdump" id="hexdumpButton"/>
+    <input type="button" value="Compile"/>
+    <input type="button" value="Run"/>
+    <input type="button" value="Reset"/>
+    <input type="button" value="Hexdump"/>
 
-    <select id="fileSelect">
+    <select>
       <option>Examples</option>
       <option value="adventure.asm">adventure.asm</option>
       <option value="alive.asm">alive.asm</option>
@@ -47,7 +47,7 @@
     <tr>
       <td valign="top">
         <div class="cursor">&nbsp;</div>
-        <textarea class="editor" id="code" onKeyPress="disableButtons()"></textarea>
+        <textarea class="editor"></textarea>
       </td>
       <td>&nbsp;</td>
       <td valign="top">
