@@ -3,13 +3,13 @@ body {
   font-family: arial, sans-serif;
 }
 
-div.btn-bar {
+div.toolbar {
   margin-top: 24px;
   margin-left: 2px;
   vertical-align: middle;
 }
 
-div.btn-bar>input {
+div.toolbar>input {
   margin: 2px;
   width: 84px;
   height: 22px;
@@ -17,7 +17,7 @@ div.btn-bar>input {
   background-color: #cdcfcd;
 }
 
-div.btn-bar>select {
+div.toolbar>select {
   margin-top: 4px;
   margin-left: 10px;
   width: 148px;
@@ -26,12 +26,12 @@ div.btn-bar>select {
   background-color: #f2f4f2;
 }
 
-div.btn-bar>input:hover:enabled {
+div.toolbar>input:hover:enabled {
   color: #000;
   background-color: #98a098;
 }
 
-textarea.code {
+textarea.editor {
   padding: 4px;
   margin: 0px;
   border: 1px solid black;
@@ -47,19 +47,19 @@ canvas.screen {
   background-color: #fff;
 }
 
-div.screen_setup {
+div.screen_res {
   padding: 10px;
   border: 1px solid #999;
 }
 
-div.screen_setup label {
+div.screen_res label {
   padding-left: 4px;
   padding-right: 4px;
   font-family: "Lucida Console", Monaco, monospace;
   font-size: 13px;
 }
 
-div.screen_setup label>span {
+div.screen_res label>span {
   font-size: 80%;
 }
 
@@ -68,9 +68,13 @@ div.palette {
   text-align: center;
 }
 
-div.palette span {
+div.palette>span {
   margin-right: 5px;
   font-size: 12px;
+}
+
+div.palette>select {
+  background-color: #f2f4f2;
 }
 
 div.registers {

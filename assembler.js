@@ -90,26 +90,11 @@ document.getElementById("compileButton").disabled = false;
 document.getElementById("runButton").disabled = true;
 document.getElementById("hexdumpButton").disabled = true;
 document.getElementById("fileSelect").disabled = false;
-document.addEventListener("keypress", keyPress, true);
 
 // reset everything
 reset();
 
-// random number generator at ZP $fe
-ram.read_hook(0x00fe, 0x00fe, function(addr) {
-    return Math.floor(Math.random() * 256);
-});
 
-// store keycode in ZP $ff
-function keyPress(e) {
-    if(typeof window.event != "undefined") {
-        e = window.event; // IE fix
-    }
-    if(e.type == "keypress") {
-        var value = e.which;
-        ram.write(0xff, value);
-    }
-}
 
 // disables the Run and Debug buttons when text is altered in the code editor
 function disableButtons() {
@@ -125,23 +110,7 @@ function disableButtons() {
 }
 
 // loads a file from server
-function load(file) {
-    reset();
-    disableButtons();
-    document.getElementById("code").value = "loading, please wait...";
-    document.getElementById("compileButton").disabled = true;
-    var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function() {
-        if(xhr.readyState == 4) {
-            if(xhr.status == 200) {
-                document.getElementById("code").value = xhr.responseText;
-                document.getElementById("compileButton").disabled = false;
-            }
-        }
-    };
-    xhr.open("GET", "examples/" + file);
-    xhr.send(null);
-}
+
 
 // reset CPU and memory
 function reset() {

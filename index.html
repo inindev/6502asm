@@ -5,13 +5,13 @@
   <meta charset="utf-8"/>
 </head>
 <body>
-  <div class="btn-bar">
-    <input type="button" value="Compile" id="compileButton" onClick="compileCode()"/>
-    <input type="button" value="Run" id="runButton" onClick="cpu.runBinary()"/>
-    <input type="button" value="Reset" id="resetButton" onClick="reset()"/>
-    <input type="button" value="Hexdump" id="hexdumpButton" onClick="hexDump()"/>
+  <div class="toolbar">
+    <input type="button" value="Compile" id="compileButton"/>
+    <input type="button" value="Run" id="runButton"/>
+    <input type="button" value="Reset" id="resetButton"/>
+    <input type="button" value="Hexdump" id="hexdumpButton"/>
 
-    <select id="fileSelect" onChange="load(this.options[this.selectedIndex].value)">
+    <select id="fileSelect">
       <option>Examples</option>
       <option value="adventure.asm">adventure.asm</option>
       <option value="alive.asm">alive.asm</option>
@@ -47,18 +47,18 @@
     <tr>
       <td valign="top">
         <div class="cursor">&nbsp;</div>
-        <textarea class="code" id="code" onKeyPress="disableButtons()"></textarea>
+        <textarea class="editor" id="code" onKeyPress="disableButtons()"></textarea>
       </td>
       <td>&nbsp;</td>
       <td valign="top">
         <div class="cursor">&nbsp;</div>
-        <canvas class="screen" id="screen"></canvas>
-        <div class="registers" id="registers"></div>
+        <canvas class="screen"></canvas>
+        <div class="registers"></div>
       </td>
       <td>&nbsp;</td>
       <td valign="top">
         <div class="cursor">&nbsp;</div>
-        <div class="screen_setup">
+        <div class="screen_res">
           <table>
             <tr>
               <td><input type="radio" id="32" name="res"/></td>
@@ -88,7 +88,7 @@
 
           <div class="palette">
             <span>Palette</span>
-            <select id="palette" onchange="change_palette(this.value)">
+            <select>
               <option value="pal_a2e">Apple II</option>
               <option value="pal_cga">CGA</option>
               <option value="pal_c64">Commodore 64</option>
@@ -108,95 +108,10 @@
 
   <br/>
 
-  <script type="text/javascript" src="ram.js"></script>
-  <script type="text/javascript" src="cpu6502.js"></script>
-  <script type="text/javascript" src="display.js"></script>
-  <script type="text/javascript" src="assembler.js"></script>
-  <script type="text/javascript">
-    function change_palette(pal) {
-        display.set_palette(pal);
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      'use strict';
-
-      document.getElementsByClassName("screen_setup")[0].addEventListener("change", (event) => {
-        var screen = document.getElementById("screen");
-        var registers = document.getElementById("registers");
-        var res = parseInt(event.target.id, 10);
-        switch(res) {
-          case 32:
-            screen.width = 384;   // 12 * 32
-            screen.height = 288;  //  9 * 32
-            registers.setAttribute("style","height:92px; width:384px");
-            display.set_resolution(screen, 32, 32, 0x0200);
-            display.refresh();
-            break;
-          case 48:
-            screen.width = 384;   //  8 * 48
-            screen.height = 288;  //  6 * 48
-            registers.setAttribute("style","height:92px; width:384px");
-            display.set_resolution(screen, 48, 48, 0x2000);
-            display.refresh();
-            break;
-          case 64:
-            screen.width = 384;   //  6 * 64
-            screen.height = 256;  //  4 * 64
-            registers.setAttribute("style","height:124px; width:384px");
-            display.set_resolution(screen, 64, 64, 0x2000);
-            display.refresh();
-            break;
-          case 80: // leave this?
-            screen.width = 400;   //  5 * 80
-            screen.height = 240;  //  3 * 80
-            registers.setAttribute("style","height:140px; width:400px");
-            display.set_resolution(screen, 80, 80, 0x2000);
-            display.refresh();
-            break;
-          case 96:
-            screen.width = 384;   //  4 * 96
-            screen.height = 288;  //  3 * 96
-            registers.setAttribute("style","height:92px; width:384px");
-            display.set_resolution(screen, 96, 96, 0x2000);
-            display.refresh();
-            break;
-          case 128:
-            screen.width = 384;   //  3 * 128
-            screen.height = 256;  //  2 * 128
-            registers.setAttribute("style","height:124px; width:384px");
-            display.set_resolution(screen, 128, 128, 0x2000);
-            display.refresh();
-            break;
-        }
-
-//        context.fillStyle = "#000000";
-//        context.fillRect(0, 0, screen.width, screen.height);
-//
-//        var pixelWidth = Math.floor(screen.width / res);
-//        var pixelHeight = Math.floor(screen.height / res);
-//        context.fillStyle = "#ffff00";
-//        for(var x=0; x<res; x++) {
-//          context.fillRect(x*pixelWidth, x*pixelHeight, pixelWidth, pixelHeight);
-//          context.fillRect(screen.width-(x+1)*pixelWidth, x*pixelHeight, pixelWidth, pixelHeight);
-//        }
-      });
-
-      // 32x32 display
-      var rbtn = document.querySelector("input[name=res]:checked");
-      if(rbtn) {
-        rbtn.checked = false;
-      }
-      else {
-        rbtn = document.getElementById("32");
-      }
-      rbtn.click();
-
-      // c64 palette
-      document.getElementById("palette").value = "pal_c64";
-      display.set_palette("pal_c64");
-
-    }, false);
-  </script>
-
+  <script src="ram.js"></script>
+  <script src="cpu6502.js"></script>
+  <script src="display.js"></script>
+  <script src="assembler.js"></script>
+  <script type="module" src="mainapp.js"></script>
 </body>
 </html>
