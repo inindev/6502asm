@@ -34,10 +34,11 @@ class MainApp
         this.toolbar.run.addEventListener("click", this.on_toggle_run_code.bind(this));
         this.toolbar.reset.addEventListener("click", reset.bind(this));
         this.toolbar.hexdump.addEventListener("click", hexDump.bind(this));
+        this.toolbar.file_select.addEventListener("change", this.on_load_file.bind(this));
 
         this.editor = document.querySelector("textarea.editor");
+        this.editor.addEventListener("keypress", this.on_editor_keypress.bind(this));
 
-        this.toolbar.file_select.addEventListener("change", this.on_load_file.bind(this));
         document.querySelector("div.screen_res").addEventListener("change", this.on_set_resolution.bind(this));
         document.querySelector("div.palette").addEventListener("change", this.on_set_palette.bind(this));
 
@@ -115,6 +116,10 @@ class MainApp
         const new_state = !this.is_running;
         cpu.set_running(new_state);
         this.update_button_states(true, new_state);  // TODO: callback for code stop
+    }
+
+    on_editor_keypress(event) {
+        this.update_button_states(false, false);
     }
 
     on_set_resolution(event) {
