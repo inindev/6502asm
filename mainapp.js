@@ -70,13 +70,9 @@ class MainApp
     // prints text in the message window
     message_write(text, error) {
         const str = text.replace("<", "&lt;").replace(">", "&gt;");
-        if(error) {
-            this.messages.innerHTML += "<b>" + str + "</b><br/>";
-        } else {
-            this.messages.innerHTML += str + "<br/>";
-        }
-
-//        this.messages.scrollTop = obj.scrollHeight;
+        const style = (error ? "color:red;font-weight:bold;" : "");
+        this.messages.innerHTML += ('<div style="margin-top:2px;' +style+ '">' +str+ "</div>");
+        this.messages.scrollTop = this.messages.scrollHeight;
     }
 
     update_button_states(is_compiled, is_running) {
