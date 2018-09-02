@@ -13,8 +13,9 @@
 'use strict';
 
 
-const CODE_START = 0x600;
-var pc = 0x00;
+const CODE_START = 0x0600;
+var code_len = 0;
+var pc = 0x0000;
 
 var ram = new RAM(0x10000); // 64k
 var cpu = new CPU6502(ram);
@@ -97,40 +98,42 @@ function reset(full) {
 // compiles code into ram
 //
 function compileCode(code, message_writer) {
-    reset();
+    reset(true);
 
     code += "\n\n";
     const lines = code.split("\n");
 
     // index (first pass)
     message_writer("indexing labels...");
+    code_len = 0;
     pc = CODE_START;
     label_map.clear();
     for(let i=0; i<lines.length; i++) {
-        if(!indexLabel(lines[i], i, message_writer)) {
-            message_writer("label already defined - line " + (i+1) + ": " + lines[i], true);
+        if(!indexLabel(lines[i], i)) {
+            message_writer("&nbsp;&nbsp;label already defined - line " + (i+1) + ": " + lines[i], true);
             return false;
         }
     }
-    message_writer("found " + label_map.size + (label_map.size==1 ? " label" : " labels"));
+    message_writer("&nbsp;&nbsp;found " + label_map.size + (label_map.size==1 ? " label" : " labels"));
 
     // compile (second pass)
     message_writer("compiling code...");
+    code_len = 0;
     pc = CODE_START;
     for(let i=0; i<lines.length; i++) {
         if(!compileLine(lines[i], i, message_writer)) {
-            message_writer("syntax error - line " + (i+1) + ": " + lines[i], true);
+            message_writer("&nbsp;&nbsp;syntax error - line " + (i+1) + ": " + lines[i], true);
             return false;
         }
     }
 
-    if((pc-CODE_START) == 0) {
-        message_writer("no code to run");
+    if(code_len == 0) {
+        message_writer("&nbsp;&nbsp;no code to run");
         return false;
     }
 
     ram.write(pc, 0x00);
-    message_writer("code compiled successfully: " + (pc-CODE_START) + " bytes");
+    message_writer("&nbsp;&nbsp;code compiled successfully: " + code_len + " bytes");
 
     return true;
 }
@@ -139,7 +142,7 @@ function compileCode(code, message_writer) {
 //
 // stores label:addr in label_map
 //
-function indexLabel(input, lineno, message_writer) {
+function indexLabel(input, lineno) {
     // remove comment & whitespace
     input = input.split(";")[0].trim();
     if(input == "") return true;
@@ -147,18 +150,21 @@ function indexLabel(input, lineno, message_writer) {
     // look for label
     if(input.match(new RegExp(/^\w+:/))) {
         const label = input.replace(new RegExp(/(^\w+):.*$/), "$1");
-        const addr = label_map.get(label);
-        if(addr) {
-            // we have seen this label before
-            // are we trying to move its address?
-            if(pc != addr) return false;
+        if(label_map.has(label)) {
+            // we have seen this label before?
+            // this is only allowed in a DCB assignment
+            input = input.replace(new RegExp(/^\w+:[\s]*(.*)$/), "$1");
+            const command = input.replace(new RegExp(/^(\w+).*$/), "$1");
+            if(command.toUpperCase() != "DCB") {
+                return false;
+            }
         } else {
             label_map.set(label, pc);
         }
     }
 
     // compile the line to move the pc for the next label and ignore errors
-    compileLine(input, lineno, message_writer);
+    compileLine(input, lineno);
 
     return true;
 }
@@ -215,10 +221,10 @@ function compileLine(input, lineno, message_writer) { // TODO: lineno not used
             addr = parseInt(param, 10);
         }
         if((addr < 0) || (addr > 0xffff)) {
-            message_writer("unable to relocate code outside 64k memory");
+            if(message_writer) message_writer("&nbsp;&nbsp;unable to relocate code outside 64k memory", true);
             return false;
         }
-        pc = addr;
+        pc = addr;  // param moves pc
         return true;
     }
 
@@ -561,6 +567,7 @@ function checkAbsolute(param, opcode) {
 //
 function pushByte(value) {
     ram.write(pc, value);
+    code_len++;
     pc++;
 }
 
@@ -576,13 +583,13 @@ function pushWord(value) {
 // hexDump() - dump binary as hex to new window
 //
 function hexDump() {
-    var w = window.open('', 'hexdump', 'width=610,height='+((pc-CODE_START)>450?800:400)+',resizable=yes,scrollbars=yes,toolbar=no,location=no,menubar=no,status=no');
+    var w = window.open('', 'hexdump', 'width=610,height='+(code_len>450?800:400)+',resizable=yes,scrollbars=yes,toolbar=no,location=no,menubar=no,status=no');
 
     var html = "<html><head>";
     html += "<link href='style.css' rel='stylesheet' type='text/css' />";
     html += "<title>hexdump</title></head>";
     html += "<body><pre>";
-    html += ram.hexdump(CODE_START, pc-1, true);
+    html += ram.hexdump(CODE_START, (CODE_START+code_len-1), true);
     html += "</pre></body></html>";
 
     w.document.write(html);
