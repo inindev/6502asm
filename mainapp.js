@@ -39,6 +39,8 @@ class MainApp
         this.editor = document.querySelector("textarea.editor");
         this.editor.addEventListener("keypress", this.on_editor_keypress.bind(this));
 
+        this.messages = document.querySelector("div.messages");
+
         document.querySelector("div.screen_res").addEventListener("change", this.on_set_resolution.bind(this));
         document.querySelector("div.palette").addEventListener("change", this.on_set_palette.bind(this));
 
@@ -66,8 +68,19 @@ class MainApp
         display.set_palette("pal_c64");
     }
 
+    // prints text in the message window
+    message_write(text, error) {
+        const str = text.replace("<", "&lt;").replace(">", "&gt;");
+        if(error) {
+            this.messages.innerHTML += "<b>" + str + "</b><br/>";
+        }
+        else {
+            this.messages.innerHTML += str + "<br/>";
+        }
 
-    // TODO: disable Run and Debug buttons when text is altered in the code editor
+//        this.messages.scrollTop = obj.scrollHeight;
+    }
+
     update_button_states(is_compiled, is_running) {
         this.is_compiled = is_compiled;
         this.is_running = is_running;
@@ -106,9 +119,10 @@ class MainApp
     //
     on_compile_code(event) {
         this.update_button_states(false, false);
+        this.messages.innerHTML = "";
 
-        let code = this.editor.value;
-        const is_compiled = compileCode(code);
+        const code = this.editor.value;
+        const is_compiled = compileCode(code, this.message_write.bind(this));
         this.update_button_states(is_compiled, false);
     }
 
@@ -187,7 +201,7 @@ class MainApp
     }
 
     on_load_file(event) {
-        reset();
+        reset(true);
         this.update_button_states(false, false);
 
         this.editor.value = "loading, please wait...";

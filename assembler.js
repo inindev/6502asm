@@ -20,12 +20,10 @@ var ram = new RAM(0x10000); // 64k
 var cpu = new CPU6502(ram);
 var display = new Display(ram);
 
-var labelIndex = new Array();
 var labelPtr = 0;
+var labelIndex = [];
 
 var codeLen = 0;
-//var codeCompiledOK = false;
-
 
                // Name,  Imm,  ZP,   ZPX,  ZPY,  ABS, ABSX, ABSY, INDX, INDY, SNGL, BRA
 var opcodes = [ ["ADC", 0x69, 0x65, 0x75, 0x00, 0x6d, 0x7d, 0x79, 0x61, 0x71, 0x00, 0x00],
@@ -85,94 +83,58 @@ var opcodes = [ ["ADC", 0x69, 0x65, 0x75, 0x00, 0x6d, 0x7d, 0x79, 0x61, 0x71, 0x
                 ["STY", 0x00, 0x84, 0x94, 0x00, 0x8c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
                 ["---", 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00] ];
 
-// init
-//document.getElementById("compileButton").disabled = false;
-//document.getElementById("runButton").disabled = true;
-//document.getElementById("hexdumpButton").disabled = true;
-//document.getElementById("fileSelect").disabled = false;
-
 // reset everything
-reset();
+reset(true);
 
 
-// disables the Run and Debug buttons when text is altered in the code editor
-//function disableButtons() {
-//    document.getElementById("runButton").disabled = true;
-//    document.getElementById("hexdumpButton").disabled = true;
-//    document.getElementById("fileSelect").disabled = false;
-//    document.getElementById("compileButton").disabled = false;
-//    document.getElementById("runButton").value = "Run";
-//    codeCompiledOK = false;
-// TODO
-//    codeRunning = false;
-//    document.getElementById("code").focus();
-//}
-
-
-// reset CPU and memory
-function reset() {
-//    ram.reset();
+// false: reset cpu
+// true:  reset cpu and memory
+function reset(full) {
+    if(full) ram.reset();
     pc = CODE_START;
     cpu.reset();
 }
 
-// prints text in the message window
-function message(text) {
-    var obj = document.getElementById("messages");
-    obj.innerHTML += text + "<br/>";
-    obj.scrollTop = obj.scrollHeight;
-}
 
 //
 // compiles code into memory array
 //
-function compileCode(code) {
+function compileCode(code, message_writer) {
     reset();
-    document.getElementById("messages").innerHTML = "";
 
     code += "\n\n";
     var lines = code.split("\n");
-//    codeCompiledOK = true;
-    labelIndex = new Array();
-    labelPtr = 0;
 
-    message("indexing labels...");
-
+    // index
+    message_writer("indexing labels...");
     pc = CODE_START;
+    labelPtr = 0;
+    labelIndex = [];
+    for(let i=0; i<lines.length; i++) {
+        if(!indexLabels(lines[i])) {
+            message_writer("label already defined - line " + (i+1) + ": " + lines[i], true);
+            return false;
+        }
+    }
+    message_writer("found " + labelIndex.length + (labelIndex.length==1 ? " label" : " labels"));
 
-    for(var xc=0; xc<lines.length; xc++) {
-        if(!indexLabels(lines[xc])) {
-            message("<b>label already defined at line "+(xc+1)+":</b> "+lines[xc]);
-            return false; // error
+    // compile
+    message_writer("compiling code...");
+    pc = CODE_START;
+    for(let i=0; i<lines.length; i++) {
+        if(!compileLine(lines[i], i)) {
+            message_writer("syntax error - line " + (i+1) + ": " + lines[i], true);
+            return false;
         }
     }
 
-    var str = "found " + labelIndex.length + " label";
-    if(labelIndex.length != 1) str += "s";
-    message(str);
-
-    pc = CODE_START;
-
-    message("compiling code...");
-
-    var x, res;
-    for(x=0, res=true; x<lines.length && res; x++) {
-        res = compileLine(lines[x], x);
-    }
-
-    if(!res) {
-        str = lines[x].replace("<", "&lt;").replace(">", "&gt;");
-        message("<b>syntax error - line " + (x+1) + ": " + str + "</b>");
-        return false;
-    }
-
     if(codeLen == 0) {
-        message("no code to run");
+        message_writer("no code to run");
         return false;
     }
 
     ram.write(pc, 0x00);
-    message("code compiled successfully: " + codeLen + " bytes");
+    message_writer("code compiled successfully: " + codeLen + " bytes");
 
     return true;
 }
@@ -181,15 +143,11 @@ function compileCode(code) {
 // pushes all labels to array
 //
 function indexLabels(input) {
-    // remove comments
-    input = input.replace(new RegExp(/^(.*?);.*/), "$1");
+    // remove comment & whitespace
+    input = input.split(";")[0].trim();
 
-    // trim line
-    input = input.replace(new RegExp(/^\s+/), "");
-    input = input.replace(new RegExp(/\s+$/), "");
-
-    // figure out how many bytes this instuction takes
-    var thisPC = pc;
+    // calculate instruction byte len
+    const pc_start = pc;
 
     codeLen = 0;
     compileLine(input);
@@ -197,7 +155,7 @@ function indexLabels(input) {
     // find command or label
     if(input.match(new RegExp(/^\w+:/))) {
         var label = input.replace(new RegExp(/(^\w+):.*$/), "$1");
-        return pushLabel(label + "|" + thisPC);
+        return pushLabel(label + "|" + pc_start);
     }
 
     return true;
@@ -217,12 +175,14 @@ function pushLabel(name) {
 // returns true if label exists
 //
 function findLabel(name) {
-    for(var i=0; i<labelIndex.length; i++) {
-        var nameAndAddr = labelIndex[i].split("|");
+    for(let i=0; i<labelIndex.length; i++) {
+        const nameAndAddr = labelIndex[i].split("|");
         if(name == nameAndAddr[0]) {
+//            console.log('label ' +name+ ' already exists');
             return true;
         }
     }
+//    console.log('label ' +name+ ' is unique');
     return false;
 }
 
@@ -258,12 +218,9 @@ function getLabelPC(name) {
 //   returns true if it compiled successfully
 //
 function compileLine(input, lineno) { // TODO: lineno not used
-    // remove comments
-    input = input.replace(new RegExp(/^(.*?);.*/), "$1");
-
-    // trim line
-    input = input.replace(new RegExp(/^\s+/), "");
-    input = input.replace(new RegExp(/\s+$/), "");
+    input = input.split(";")[0].trim();
+    if(input == "")
+        return true;
 
     // find command or label
     var command = "";
@@ -339,22 +296,22 @@ function compileLine(input, lineno) { // TODO: lineno not used
     return false; // unknown opcode
 }
 
+
 /*****************************************************************************
  ****************************************************************************/
 
 function DCB(param) {
-    var values = param.split(",");
+    let values = param.split(",");
     if(values.length == 0) return false;
-    for(var v=0; v<values.length; v++) {
-        var str = values[v];
+    for(let v=0; v<values.length; v++) {
+        let str = values[v];
         if(str != undefined && str != null && str.length > 0) {
-            var ch = str.substring(0, 1);
-            var number = 0;
+            let ch = str.substring(0, 1);
             if(ch == "$") {
-                number = parseInt(str.replace(/^\$/, ""), 16);
+                let number = parseInt(str.replace(/^\$/, ""), 16);
                 pushByte(number);
             } else if(ch >= "0" && ch <= "9") {
-                number = parseInt(str, 10);
+                let number = parseInt(str, 10);
                 pushByte(number);
             } else {
                 return false;
