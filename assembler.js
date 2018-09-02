@@ -177,6 +177,7 @@ function indexLabel(input, lineno) {
 //
 // get address associated with label
 //
+// TODO: error handling around -1 retval
 function getLabelPC(name) {
     const addr = label_map.get(name);
     return (addr ? addr : -1);
@@ -303,15 +304,22 @@ function checkBranch(param, opcode) {
     if(opcode == 0x00) return false;
 
     var addr = -1;
-    if(param.match(/\w+/))
+    if(param.match(/\w+/)) {
         addr = getLabelPC(param);
-    if(addr == -1) { pushWord(0x00); return false; }
-    pushByte(opcode);
-    if(addr < (pc-0x600)) {    // Backwards?
-        pushByte((0xff - ((pc-0x600)-addr)) & 0xff);
-        return true;
     }
-    pushByte((addr-(pc-0x600)-1) & 0xff);
+
+    if(addr == -1) {
+        pushWord(0x00);
+        return false;
+    }
+
+    pushByte(opcode);
+
+    if(addr < (pc-CODE_START)) {    // go backwards?
+        pushByte((0xff-pc-CODE_START-addr) & 0xff);
+    } else {
+        pushByte((addr-pc-CODE_START-1) & 0xff);
+    }
     return true;
 }
 

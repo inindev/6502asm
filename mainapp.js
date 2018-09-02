@@ -123,7 +123,12 @@ class MainApp
 
     on_toggle_run_code(event) {
         const new_state = !this.is_running;
-        cpu.set_running(new_state);
+        if(new_state) {
+            // start execution
+            cpu.go();
+        } else {
+            cpu.halt();
+        }
         this.update_button_states(true, new_state);  // TODO: callback for code stop
     }
 
