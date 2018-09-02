@@ -19,12 +19,12 @@
 ; a red star thingy). These two items are needed to defeat Evil Guy.
 ;
 ; Evil Guy lives in the Black Castle, which you can get to through the
-; desert. Conveniantly enough, the key to the Black Castle is somewhere
+; desert. Conveniently enough, the key to the Black Castle is somewhere
 ; in the desert.
 ;
 ; Find Evil Guy in the Black Castle while wearing the crown and weapon
 ; and you win! If you lack either the crown or weapon, the screen will
-; flash only red, and you will loose! 
+; flash only red, and you will loose!
 ;
 ; Copyright (c) 2010 Norman B. Lancaster
 ;
@@ -64,9 +64,9 @@ frame_buffer:
 *=1536
 jmp		start
 
-;screen_item_x:		dcb $00
-;screen_item_y:		dcb $00
-;screen_item_idx:	dcb $00
+screen_item_x:		dcb $00
+screen_item_y:		dcb $00
+screen_item_idx:	dcb $00
 
 ; Screen RAM, 64 Bytes
 screen_ram:

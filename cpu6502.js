@@ -147,8 +147,7 @@ function CPU6502(ram)
 
       if(do_run) {
           interval = setInterval(multiexecute, 1);  // run every 1ms
-      }
-      else {
+      } else {
           clearInterval(interval);
           interval = null;
       }

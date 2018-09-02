@@ -22,8 +22,6 @@ var display = new Display(ram);
 
 var label_map = new Map();
 
-var codeLen = 0;
-
                // Name,  Imm,  ZP,   ZPX,  ZPY,  ABS, ABSX, ABSY, INDX, INDY, SNGL, BRA
 var opcodes = [ ["ADC", 0x69, 0x65, 0x75, 0x00, 0x6d, 0x7d, 0x79, 0x61, 0x71, 0x00, 0x00],
                 ["AND", 0x29, 0x25, 0x35, 0x00, 0x2d, 0x3d, 0x39, 0x21, 0x31, 0x00, 0x00],
@@ -96,28 +94,27 @@ function reset(full) {
 
 
 //
-// compiles code into memory array
+// compiles code into ram
 //
 function compileCode(code, message_writer) {
     reset();
 
     code += "\n\n";
-    var lines = code.split("\n");
+    const lines = code.split("\n");
 
-    // index
+    // index (first pass)
     message_writer("indexing labels...");
     pc = CODE_START;
     label_map.clear();
-
     for(let i=0; i<lines.length; i++) {
-        if(!indexLabels(lines[i])) {
+        if(!indexLabel(lines[i], i, message_writer)) {
             message_writer("label already defined - line " + (i+1) + ": " + lines[i], true);
             return false;
         }
     }
     message_writer("found " + label_map.size + (label_map.size==1 ? " label" : " labels"));
 
-    // compile
+    // compile (second pass)
     message_writer("compiling code...");
     pc = CODE_START;
     for(let i=0; i<lines.length; i++) {
@@ -127,38 +124,41 @@ function compileCode(code, message_writer) {
         }
     }
 
-    if(codeLen == 0) {
+    if((pc-CODE_START) == 0) {
         message_writer("no code to run");
         return false;
     }
 
     ram.write(pc, 0x00);
-    message_writer("code compiled successfully: " + codeLen + " bytes");
+    message_writer("code compiled successfully: " + (pc-CODE_START) + " bytes");
 
     return true;
 }
 
 
 //
-// pushes all labels to array
+// stores label:addr in label_map
 //
-function indexLabels(input) {
+function indexLabel(input, lineno, message_writer) {
     // remove comment & whitespace
     input = input.split(";")[0].trim();
+    if(input == "") return true;
 
-    // calculate instruction byte len
-    const pc_start = pc;
-
-    codeLen = 0;
-    // TODO: fix params
-    compileLine(input, null, null);
-
-    // find command or label
+    // look for label
     if(input.match(new RegExp(/^\w+:/))) {
-        var label = input.replace(new RegExp(/(^\w+):.*$/), "$1");
-        if(label_map.has(label)) return false;
-        label_map.set(label, pc_start);
+        const label = input.replace(new RegExp(/(^\w+):.*$/), "$1");
+        const addr = label_map.get(label);
+        if(addr) {
+            // we have seen this label before
+            // are we trying to move its address?
+            if(pc != addr) return false;
+        } else {
+            label_map.set(label, pc);
+        }
     }
+
+    // compile the line to move the pc for the next label and ignore errors
+    compileLine(input, lineno, message_writer);
 
     return true;
 }
@@ -178,15 +178,15 @@ function getLabelPC(name) {
 //   returns true if it compiled successfully
 //
 function compileLine(input, lineno, message_writer) { // TODO: lineno not used
+    // remove comment & whitespace
     input = input.split(";")[0].trim();
-    if(input == "")
-        return true;
+    if(input == "") return true;
 
-    // find command or label
+    // look for command
     var command = "";
     if(input.match(new RegExp(/^\w+:/))) {
-// TODO: is label not used?
-//        label = input.replace(new RegExp(/(^\w+):.*$/), "$1");
+        // labels are handles in the first-pass compile
+        // const label = input.replace(new RegExp(/(^\w+):.*$/), "$1");
         if(input.match(new RegExp(/^\w+:[\s]*\w+.*$/))) {
             input = input.replace(new RegExp(/^\w+:[\s]*(.*)$/), "$1");
             command = input.replace(new RegExp(/^(\w+).*$/), "$1");
@@ -198,11 +198,11 @@ function compileLine(input, lineno, message_writer) { // TODO: lineno not used
     }
 
     // blank line?
-    if(command == "")
-        return true;
+    if(command == "") return true;
 
     command = command.toUpperCase();
 
+    // look for param
     var param = "";
     if(input.match(/^\*[\s]*=[\s]*[\$]?[0-9a-f]*$/)) {
         // equ spotted
@@ -234,8 +234,9 @@ function compileLine(input, lineno, message_writer) { // TODO: lineno not used
 
     param = param.replace(/[ ]/g, "");
 
-    if(command == "DCB")
+    if(command == "DCB") {
         return DCB(param);
+    }
 
     for(var o=0; o<opcodes.length; o++) {
         if(opcodes[o][0] == command) {
@@ -258,8 +259,12 @@ function compileLine(input, lineno, message_writer) { // TODO: lineno not used
 
 
 /*****************************************************************************
+  operations and directives
  ****************************************************************************/
 
+//
+// define constant byte directive
+//
 function DCB(param) {
     let values = param.split(",");
     if(values.length == 0) return false;
@@ -557,7 +562,6 @@ function checkAbsolute(param, opcode) {
 function pushByte(value) {
     ram.write(pc, value);
     pc++;
-    codeLen++;
 }
 
 //
@@ -572,13 +576,13 @@ function pushWord(value) {
 // hexDump() - dump binary as hex to new window
 //
 function hexDump() {
-    var w = window.open('', 'hexdump', 'width=610,height='+(codeLen>450?800:400)+',resizable=yes,scrollbars=yes,toolbar=no,location=no,menubar=no,status=no');
+    var w = window.open('', 'hexdump', 'width=610,height='+((pc-CODE_START)>450?800:400)+',resizable=yes,scrollbars=yes,toolbar=no,location=no,menubar=no,status=no');
 
     var html = "<html><head>";
     html += "<link href='style.css' rel='stylesheet' type='text/css' />";
     html += "<title>hexdump</title></head>";
     html += "<body><pre>";
-    html += ram.hexdump(CODE_START, CODE_START+codeLen-1, true);
+    html += ram.hexdump(CODE_START, pc-1, true);
     html += "</pre></body></html>";
 
     w.document.write(html);
