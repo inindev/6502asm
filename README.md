@@ -1,16 +1,16 @@
-### 6502asm
+## 6502asm
 
 ###### by John Clark 2018
 ---
 
-#### 6502 Compiler and Emulator
+### 6502 Compiler and Emulator
 
 Based on the orignal work by Stian Soreng  
 Downloaded from: [http://6502asm.com]()
 
 <br>
 
-##### Running
+### Running
 
 Run the test python webserver on port 8000:  
 &nbsp;&nbsp;&nbsp;```python http_server.py```
@@ -19,7 +19,7 @@ Then visit link: [http://localhost:8000]()
 
 <br>
 
-##### Files
+### Files
 
 file | description
 ------------ | -------------
