@@ -57,8 +57,7 @@ class MainApp
         var rbtn = document.querySelector("input[name=res]:checked");
         if(rbtn) {
             rbtn.checked = false;
-        }
-        else {
+        } else {
             rbtn = document.getElementById("32");
         }
         rbtn.click();
@@ -73,8 +72,7 @@ class MainApp
         const str = text.replace("<", "&lt;").replace(">", "&gt;");
         if(error) {
             this.messages.innerHTML += "<b>" + str + "</b><br/>";
-        }
-        else {
+        } else {
             this.messages.innerHTML += str + "<br/>";
         }
 
@@ -105,10 +103,11 @@ class MainApp
 
         if(this.is_running) {
             this.toolbar.file_select.disabled = true;
+            this.editor.readOnly = true;
             this.toolbar.run.value = "Stop";
-        }
-        else {
+        } else {
             this.toolbar.file_select.disabled = false;
+            this.editor.readOnly = false;
             this.toolbar.run.value = "Run";
         }
     }
@@ -133,6 +132,7 @@ class MainApp
     }
 
     on_editor_keypress(event) {
+        if(this.is_running) return;
         this.update_button_states(false, false);
     }
 
