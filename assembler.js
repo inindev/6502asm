@@ -89,8 +89,12 @@ reset(true);
 // true:  reset cpu and memory
 function reset(full) {
     if(full) ram.reset();
-    pc = CODE_START;
     cpu.reset();
+    display.reset();
+
+    code_len = 0;
+    pc = CODE_START;
+    label_map.clear();
 }
 
 
@@ -148,13 +152,13 @@ function indexLabel(input, lineno) {
     if(input == "") return true;
 
     // look for label
-    if(input.match(new RegExp(/^\w+:/))) {
-        const label = input.replace(new RegExp(/(^\w+):.*$/), "$1");
+    if(input.match(/^\w+:/)) {
+        const label = input.replace(/(^\w+):.*$/, "$1");
         if(label_map.has(label)) {
             // we have seen this label before?
             // this is only allowed in a DCB assignment
-            input = input.replace(new RegExp(/^\w+:[\s]*(.*)$/), "$1");
-            const command = input.replace(new RegExp(/^(\w+).*$/), "$1");
+            input = input.replace(/^\w+:[\s]*(.*)$/, "$1");
+            const command = input.replace(/^(\w+).*$/, "$1");
             if(command.toUpperCase() != "DCB") {
                 return false;
             }
@@ -190,17 +194,17 @@ function compileLine(input, lineno, message_writer) { // TODO: lineno not used
 
     // look for command
     var command = "";
-    if(input.match(new RegExp(/^\w+:/))) {
+    if(input.match(/^\w+:/)) {
         // labels are handles in the first-pass compile
-        // const label = input.replace(new RegExp(/(^\w+):.*$/), "$1");
-        if(input.match(new RegExp(/^\w+:[\s]*\w+.*$/))) {
-            input = input.replace(new RegExp(/^\w+:[\s]*(.*)$/), "$1");
-            command = input.replace(new RegExp(/^(\w+).*$/), "$1");
+        // const label = input.replace(/(^\w+):.*$/, "$1");
+        if(input.match(/^\w+:[\s]*\w+.*$/)) {
+            input = input.replace(/^\w+:[\s]*(.*)$/, "$1");
+            command = input.replace(/^(\w+).*$/, "$1");
         } else {
             command = "";
         }
     } else {
-        command = input.replace(new RegExp(/^(\w+).*$/), "$1");
+        command = input.replace(/^(\w+).*$/, "$1");
     }
 
     // blank line?
@@ -213,9 +217,9 @@ function compileLine(input, lineno, message_writer) { // TODO: lineno not used
     if(input.match(/^\*[\s]*=[\s]*[\$]?[0-9a-f]*$/)) {
         // equ spotted
         var addr = -1;
-        param = input.replace(new RegExp(/^[\s]*\*[\s]*=[\s]*/), "");
+        param = input.replace(/^[\s]*\*[\s]*=[\s]*/, "");
         if(param[0] == "$") {
-            param = param.replace(new RegExp(/^\$/), "");
+            param = param.replace(/^\$/, "");
             addr = parseInt(param, 16);
         } else {
             addr = parseInt(param, 10);
@@ -229,7 +233,7 @@ function compileLine(input, lineno, message_writer) { // TODO: lineno not used
     }
 
     if(input.match(/^\w+\s+.*?$/)) {
-        param = input.replace(new RegExp(/^\w+\s+(.*?)/), "$1");
+        param = input.replace(/^\w+\s+(.*?)/, "$1");
     } else {
         if(input.match(/^\w+$/)) {
             param = "";
@@ -317,14 +321,14 @@ function checkBranch(param, opcode) {
 function checkImmediate(param, opcode) {
     if(opcode == 0x00) return false;
 
-    if(param.match(new RegExp(/^#\$[0-9a-f]{1,2}$/i))) {
+    if(param.match(/^#\$[0-9a-f]{1,2}$/i)) {
         pushByte(opcode);
         let value = parseInt(param.replace(/^#\$/, ""), 16);
         if(value < 0 || value > 255) return false;
         pushByte(value);
         return true;
     }
-    if(param.match(new RegExp(/^#[0-9]{1,3}$/i))) {
+    if(param.match(/^#[0-9]{1,3}$/i)) {
         pushByte(opcode);
         let value = parseInt(param.replace(/^#/, ""), 10);
         if(value < 0 || value > 255) return false;
@@ -332,9 +336,9 @@ function checkImmediate(param, opcode) {
         return true;
     }
     // label lo/hi
-    if(param.match(new RegExp(/^#[<>]\w+$/))) {
-        let label = param.replace(new RegExp(/^#[<>](\w+)$/), "$1");
-        let hilo = param.replace(new RegExp(/^#([<>]).*$/), "$1");
+    if(param.match(/^#[<>]\w+$/)) {
+        let label = param.replace(/^#[<>](\w+)$/, "$1");
+        let hilo = param.replace(/^#([<>]).*$/, "$1");
         pushByte(opcode);
         if(label_map.has(label)) {
             let addr = getLabelPC(label);
@@ -368,7 +372,7 @@ function checkIndirectX(param, opcode) {
     if(opcode == 0x00) return false;
     if(param.match(/^\(\$[0-9a-f]{1,2},X\)$/i)) {
         pushByte(opcode);
-        var value = param.replace(new RegExp(/^\(\$([0-9a-f]{1,2}).*$/i), "$1");
+        var value = param.replace(/^\(\$([0-9a-f]{1,2}).*$/i, "$1");
         if(value < 0 || value > 255) return false;
         pushByte(parseInt(value, 16));
         return true;
@@ -383,7 +387,7 @@ function checkIndirectY(param, opcode) {
     if(opcode == 0x00) return false;
     if(param.match(/^\(\$[0-9a-f]{1,2}\),Y$/i)) {
         pushByte(opcode);
-        var value = param.replace(new RegExp(/^\([\$]([0-9a-f]{1,2}).*$/i), "$1");
+        var value = param.replace(/^\([\$]([0-9a-f]{1,2}).*$/i, "$1");
         if(value < 0 || value > 255) return false;
         pushByte(parseInt(value, 16));
         return true;
@@ -431,7 +435,7 @@ function checkAbsoluteX(param, opcode) {
     if(opcode == 0x00) return false;
     if(param.match(/^\$[0-9a-f]{3,4},X$/i)) {
         pushByte(opcode);
-        var number = param.replace(new RegExp(/^\$([0-9a-f]*),X/i), "$1");
+        var number = param.replace(/^\$([0-9a-f]*),X/i, "$1");
         var value = parseInt(number, 16);
         if(value < 0 || value > 0xffff) return false;
         pushWord(value);
@@ -439,7 +443,7 @@ function checkAbsoluteX(param, opcode) {
     }
 
     if(param.match(/^\w+,X$/i)) {
-        param = param.replace(new RegExp(/,X$/i), "");
+        param = param.replace(/,X$/i, "");
         pushByte(opcode);
         if(label_map.has(param)) {
             var addr = getLabelPC(param);
@@ -462,7 +466,7 @@ function checkAbsoluteY(param, opcode) {
     if(opcode == 0x00) return false;
     if(param.match(/^\$[0-9a-f]{3,4},Y$/i)) {
         pushByte(opcode);
-        var number = param.replace(new RegExp(/^\$([0-9a-f]*),Y/i), "$1");
+        var number = param.replace(/^\$([0-9a-f]*),Y/i, "$1");
         var value = parseInt(number, 16);
         if(value < 0 || value > 0xffff) return false;
         pushWord(value);
@@ -471,7 +475,7 @@ function checkAbsoluteY(param, opcode) {
 
     // it could be a label too...
     if(param.match(/^\w+,Y$/i)) {
-        param = param.replace(new RegExp(/,Y$/i), "");
+        param = param.replace(/,Y$/i, "");
         pushByte(opcode);
         if(label_map.has(param)) {
             var addr = getLabelPC(param);
@@ -494,7 +498,7 @@ function checkZeroPageX(param, opcode) {
 
     if(param.match(/^\$[0-9a-f]{1,2},X/i)) {
         pushByte(opcode);
-        let number = param.replace(new RegExp(/^\$([0-9a-f]{1,2}),X/i), "$1");
+        let number = param.replace(/^\$([0-9a-f]{1,2}),X/i, "$1");
         let value = parseInt(number, 16);
         if(value < 0 || value > 255) return false;
         pushByte(value);
@@ -502,7 +506,7 @@ function checkZeroPageX(param, opcode) {
     }
     if(param.match(/^[0-9]{1,3},X/i)) {
         pushByte(opcode);
-        let number = param.replace(new RegExp(/^([0-9]{1,3}),X/i), "$1");
+        let number = param.replace(/^([0-9]{1,3}),X/i, "$1");
         let value = parseInt(number, 10);
         if(value < 0 || value > 255) return false;
         pushByte(value);
@@ -518,7 +522,7 @@ function checkZeroPageY(param, opcode) {
     if(opcode == 0x00) return false;
     if(param.match(/^\$[0-9a-f]{1,2},Y/i)) {
         pushByte(opcode);
-        let number = param.replace(new RegExp(/^\$([0-9a-f]{1,2}),Y/i), "$1");
+        let number = param.replace(/^\$([0-9a-f]{1,2}),Y/i, "$1");
         let value = parseInt(number, 16);
         if(value < 0 || value > 255) return false;
         pushByte(value);
@@ -526,7 +530,7 @@ function checkZeroPageY(param, opcode) {
     }
     if(param.match(/^[0-9]{1,3},Y/i)) {
         pushByte(opcode);
-        let number = param.replace(new RegExp(/^([0-9]{1,3}),Y/i), "$1");
+        let number = param.replace(/^([0-9]{1,3}),Y/i, "$1");
         let value = parseInt(number, 10);
         if(value < 0 || value > 255) return false;
         pushByte(value);
