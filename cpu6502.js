@@ -73,7 +73,8 @@ function CPU6502(ram)
           regSP--;
           ram.write((regSP & 0xff) + 0x100, value);
       } else {
-          message("Stack full: " + regSP);
+// TODO: message callback
+//          message("Stack full: " + regSP);
           set_running(false);
       }
   }
@@ -90,7 +91,8 @@ function CPU6502(ram)
           regSP++;
           return value;
       } else {
-          message("Stack empty");
+// TODO: message callback
+//          message("Stack empty");
           set_running(false);
           return 0;
       }
@@ -1131,7 +1133,8 @@ function CPU6502(ram)
               if(value & 0x80) regS |= 0x80; else regS &= 0x7f;
               break;
           default:
-              message("Address $" + addr2hex(regPC) + " - unknown opcode " + opcode);
+// TODO: message callback
+//              message("Address $" + addr2hex(regPC) + " - unknown opcode " + opcode);
               set_running(false);
               break;
       }
@@ -1141,7 +1144,8 @@ function CPU6502(ram)
       }
 
       if(!is_running()) {
-          message("program end at PC=$" + addr2hex(regPC-1));
+// TODO: message callback
+//          message("program end at PC=$" + addr2hex(regPC-1));
       }
   }
 

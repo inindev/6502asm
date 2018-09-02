@@ -64,9 +64,9 @@ frame_buffer:
 *=1536
 jmp		start
 
-screen_item_x:		dcb $00
-screen_item_y:		dcb $00
-screen_item_idx:	dcb $00
+;screen_item_x:		dcb $00
+;screen_item_y:		dcb $00
+;screen_item_idx:	dcb $00
 
 ; Screen RAM, 64 Bytes
 screen_ram:

@@ -20,8 +20,7 @@ var ram = new RAM(0x10000); // 64k
 var cpu = new CPU6502(ram);
 var display = new Display(ram);
 
-var labelPtr = 0;
-var labelIndex = [];
+var label_map = new Map();
 
 var codeLen = 0;
 
@@ -108,21 +107,21 @@ function compileCode(code, message_writer) {
     // index
     message_writer("indexing labels...");
     pc = CODE_START;
-    labelPtr = 0;
-    labelIndex = [];
+    label_map.clear();
+
     for(let i=0; i<lines.length; i++) {
         if(!indexLabels(lines[i])) {
             message_writer("label already defined - line " + (i+1) + ": " + lines[i], true);
             return false;
         }
     }
-    message_writer("found " + labelIndex.length + (labelIndex.length==1 ? " label" : " labels"));
+    message_writer("found " + label_map.size + (label_map.size==1 ? " label" : " labels"));
 
     // compile
     message_writer("compiling code...");
     pc = CODE_START;
     for(let i=0; i<lines.length; i++) {
-        if(!compileLine(lines[i], i)) {
+        if(!compileLine(lines[i], i, message_writer)) {
             message_writer("syntax error - line " + (i+1) + ": " + lines[i], true);
             return false;
         }
@@ -139,6 +138,7 @@ function compileCode(code, message_writer) {
     return true;
 }
 
+
 //
 // pushes all labels to array
 //
@@ -150,74 +150,34 @@ function indexLabels(input) {
     const pc_start = pc;
 
     codeLen = 0;
-    compileLine(input);
+    // TODO: fix params
+    compileLine(input, null, null);
 
     // find command or label
     if(input.match(new RegExp(/^\w+:/))) {
         var label = input.replace(new RegExp(/(^\w+):.*$/), "$1");
-        return pushLabel(label + "|" + pc_start);
+        if(label_map.has(label)) return false;
+        label_map.set(label, pc_start);
     }
 
     return true;
 }
 
-//
-// push label to array
-//   returns false if label already exists
-//
-function pushLabel(name) {
-    if(findLabel(name)) return false;
-    labelIndex[labelPtr++] = name + "|";
-    return true;
-}
-
-//
-// returns true if label exists
-//
-function findLabel(name) {
-    for(let i=0; i<labelIndex.length; i++) {
-        const nameAndAddr = labelIndex[i].split("|");
-        if(name == nameAndAddr[0]) {
-//            console.log('label ' +name+ ' already exists');
-            return true;
-        }
-    }
-//    console.log('label ' +name+ ' is unique');
-    return false;
-}
-
-//
-// associates label with address
-//
-function setLabelPC(name, addr) {
-    for(var i=0; i<labelIndex.length; i++) {
-        var nameAndAddr = labelIndex[i].split("|");
-        if(name == nameAndAddr[0]) {
-            labelIndex[i] = name + "|" + addr;
-            return true;
-        }
-    }
-    return false;
-}
 
 //
 // get address associated with label
 //
 function getLabelPC(name) {
-    for(var i=0; i<labelIndex.length; i++) {
-        var nameAndAddr = labelIndex[i].split("|");
-        if(name == nameAndAddr[0]) {
-            return (nameAndAddr[1]);
-        }
-    }
-    return -1;
+    const addr = label_map.get(name);
+    return (addr ? addr : -1);
 }
+
 
 //
 // compiles one line of code
 //   returns true if it compiled successfully
 //
-function compileLine(input, lineno) { // TODO: lineno not used
+function compileLine(input, lineno, message_writer) { // TODO: lineno not used
     input = input.split(";")[0].trim();
     if(input == "")
         return true;
@@ -255,7 +215,7 @@ function compileLine(input, lineno) { // TODO: lineno not used
             addr = parseInt(param, 10);
         }
         if((addr < 0) || (addr > 0xffff)) {
-            message("unable to relocate code outside 64k memory");
+            message_writer("unable to relocate code outside 64k memory");
             return false;
         }
         pc = addr;
@@ -365,7 +325,7 @@ function checkImmediate(param, opcode) {
         let label = param.replace(new RegExp(/^#[<>](\w+)$/), "$1");
         let hilo = param.replace(new RegExp(/^#([<>]).*$/), "$1");
         pushByte(opcode);
-        if(findLabel(label)) {
+        if(label_map.has(label)) {
             let addr = getLabelPC(label);
             switch(hilo) {
                 case ">":
@@ -421,7 +381,7 @@ function checkIndirectY(param, opcode) {
 }
 
 //
-//    checkSingle() - single-byte opcodes
+// checkSingle() - single-byte opcodes
 //
 function checkSingle(param, opcode) {
     if(opcode == 0x00) return false;
@@ -470,7 +430,7 @@ function checkAbsoluteX(param, opcode) {
     if(param.match(/^\w+,X$/i)) {
         param = param.replace(new RegExp(/,X$/i), "");
         pushByte(opcode);
-        if(findLabel(param)) {
+        if(label_map.has(param)) {
             var addr = getLabelPC(param);
             if(addr < 0 || addr > 0xffff) return false;
             pushWord(addr);
@@ -502,7 +462,7 @@ function checkAbsoluteY(param, opcode) {
     if(param.match(/^\w+,Y$/i)) {
         param = param.replace(new RegExp(/,Y$/i), "");
         pushByte(opcode);
-        if(findLabel(param)) {
+        if(label_map.has(param)) {
             var addr = getLabelPC(param);
             if(addr < 0 || addr > 0xffff) return false;
             pushWord(addr);
@@ -578,7 +538,7 @@ function checkAbsolute(param, opcode) {
     }
     // it could be a label too...
     if(param.match(/^\w+$/)) {
-        if(findLabel(param)) {
+        if(label_map.has(param)) {
             let addr = (getLabelPC(param));
             if(addr < 0 || addr > 0xffff) return false;
             pushWord(addr);
