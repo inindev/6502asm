@@ -1,19 +1,19 @@
-; 6502 assembler Sierpinsky Triangle ver.2
+; 6502 assembler Sierpinski Triangle ver.2
 ; by Magnus Wedmark 2007-05-02
 ; This program is especially written for
-; the 6502asm.com competition and 
+; the 6502asm.com competition and
 ; uses the 32*32 pixel display used in that
-; virtual platform. The sierpinsky 
+; virtual platform. The sierpinski
 ; fractal is one of the simplest to
 ; implement. Here is a walk-through:
 ; 1) Specify 3 points that form a triangle
 ; 2) Choose one of them as a starting point
-; 3) Choose one of them as targetpoint randomly
-; 4) Set the new current position half-way 
-;    between the current point and the target 
+; 3) Choose one of them as target point randomly
+; 4) Set the new current position half-way
+;    between the current point and the target
 ;    point.
 ; 5) Goto 3
-	
+
 	LDX #0
 	LDY #0
 new_rnd:
@@ -22,10 +22,10 @@ new_rnd:
 	CMP #3
 	BNE good_rnd
 	JMP new_rnd
-good_rnd:     
+good_rnd:
 ; random = 0-2
 	PHA
-; transform X and Y values according to: 
+; transform X and Y values according to:
 ; X=X/2+(P*8) and Y=Y/2+(P*16)
 	ASL
 	ASL
@@ -54,8 +54,8 @@ set_point: ; uses both X,Y,A and restores them
 	TXA
 	PHA
 	TYA
-	PHA 
-	PHA 
+	PHA
+	PHA
 	PHA ; triple Y push, two for int. use
 	STX $F2  ; transfer X to Y using $F2
 	LDY $F2
@@ -84,7 +84,7 @@ no_carry:
 	LSR
 	LSR
 	ADC $F1
-	STA $F1		
+	STA $F1
 
 	CLC
 	TYA
@@ -102,7 +102,7 @@ no_carry:
 	RTS
 
 ; sub routine to shade the current pixel ($F0),Y
-; lighter on a scale: $0, $B, $C, $F, $1 
+; lighter on a scale: $0, $B, $C, $F, $1
 ; Black, DarkGrey, Grey, LightGrey, White
 set_toning_point:
         LDA ($F0),Y
